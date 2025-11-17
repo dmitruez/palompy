@@ -1,12 +1,18 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ES2024",
+    "lib": ["ES2024"],
     "module": "commonjs",
+    "moduleResolution": "node",
     "rootDir": ".",
     "outDir": "dist",
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
+    "noImplicitOverride": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "skipLibCheck": true,
     "resolveJsonModule": true
   },
