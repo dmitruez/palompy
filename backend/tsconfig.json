@@ -1,5 +1,4 @@
 {
-  // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     // File Layout
     // "rootDir": "./src",
@@ -40,5 +39,18 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
+    "resolveJsonModule": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "config/**/*.ts",
+    "routes/**/*.ts",
+    "services/**/*.ts",
+    "models/**/*.ts",
+    "utils/**/*.ts",
+    "types/**/*.d.ts"
+  ],
+  "ts-node": {
+    "files": true
   }
 }
