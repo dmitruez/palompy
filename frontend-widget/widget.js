@@ -42,6 +42,17 @@
         dislike: 'Нужно улучшить 👎',
         thanks: 'Спасибо за отзыв! Мы уже работаем над улучшениями.',
       },
+      survey: {
+        title: 'Минутный опрос',
+        description: 'Ответьте на пару вопросов и помогите сделать сервис лучше.',
+        cta: 'Отправить ответы',
+        skip: 'Скрыть',
+        sending: 'Сохраняем ответы…',
+        success: 'Спасибо! Ответы сохранены.',
+        error: 'Не удалось отправить ответы. Попробуйте позже.',
+        requiredWarning: 'Пожалуйста, ответьте на обязательные вопросы.',
+        optionalLabel: 'необязательно',
+      },
       scenarioDefaults: {
         'cart-abandon': {
           botMessage: 'Вы собирались оформить заказ. Подсказать по доставке или оплате?',
@@ -103,6 +114,17 @@
         dislike: 'Needs work 👎',
         thanks: 'Thank you! Your feedback helps us improve.',
       },
+      survey: {
+        title: 'One-minute survey',
+        description: 'Answer a couple of questions to help us improve.',
+        cta: 'Send feedback',
+        skip: 'Hide survey',
+        sending: 'Saving your answers…',
+        success: 'Thanks! Your response is saved.',
+        error: 'Unable to send answers right now. Please try later.',
+        requiredWarning: 'Please fill in the required questions.',
+        optionalLabel: 'optional',
+      },
       scenarioDefaults: {
         'cart-abandon': {
           botMessage: 'You were close to completing the order. Need help with shipping or payment?',
@@ -150,7 +172,11 @@
     const language = resolveLanguage();
     const texts = translations[language];
     const apiBase = script.dataset.apiBase || new URL(script.src, window.location.href).origin;
-    const chatEndpoint = `${apiBase.replace(/\/$/, '')}/api/chat`;
+    const normalizedBase = apiBase.replace(/\/$/, '');
+    const chatEndpoint = `${normalizedBase}/api/chat`;
+    const analyticsEndpoint = `${normalizedBase}/api/analytics/events`;
+    const surveyLookupEndpoint = `${normalizedBase}/api/shops/public/${shopPublicKey}/surveys/active`;
+    const surveyResponsesEndpoint = `${normalizedBase}/api/surveys`;
     injectStylesheet(script.src);
 
     const sessionKey = `palompy_session_${shopPublicKey}`;
@@ -165,9 +191,84 @@
       unread: 0,
     };
 
+    const analyticsState = {
+      sessionStartedAt: Date.now(),
+      visibleStartedAt: document.hidden ? null : Date.now(),
+      focusedMs: 0,
+    };
+
+    function trackEvent(eventName, metadata = {}, options = {}) {
+      const meta = metadata && typeof metadata === 'object' ? { ...metadata } : {};
+      if (!('language' in meta)) {
+        meta.language = language;
+      }
+      if (!('page' in meta)) {
+        meta.page = window.location.href;
+      }
+      const body = JSON.stringify({
+        shopPublicKey,
+        sessionId,
+        eventName,
+        metadata: meta,
+      });
+      if (options.immediate && navigator.sendBeacon) {
+        const blob = new Blob([body], { type: 'application/json' });
+        navigator.sendBeacon(analyticsEndpoint, blob);
+        return;
+      }
+      fetch(analyticsEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        keepalive: options.immediate === true,
+      }).catch((error) => {
+        console.warn('[palompy] analytics error', error);
+      });
+    }
+
+    function updateVisibleTime() {
+      if (document.hidden && analyticsState.visibleStartedAt) {
+        analyticsState.focusedMs += Date.now() - analyticsState.visibleStartedAt;
+        analyticsState.visibleStartedAt = null;
+      } else if (!document.hidden && analyticsState.visibleStartedAt === null) {
+        analyticsState.visibleStartedAt = Date.now();
+      }
+    }
+
+    function flushSessionDuration(immediate = false) {
+      updateVisibleTime();
+      const durationMs = Date.now() - analyticsState.sessionStartedAt;
+      trackEvent(
+        'session_duration',
+        { durationMs, focusedMs: analyticsState.focusedMs },
+        { immediate },
+      );
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      updateVisibleTime();
+      trackEvent(document.hidden ? 'page_hidden' : 'page_visible');
+    });
+
+    window.addEventListener('beforeunload', () => {
+      flushSessionDuration(true);
+    });
+
     const elements = buildWidget(texts, quickPrompts, perks);
     appendMessage(texts.welcome, 'bot');
     updateStatus('ready');
+
+    const surveyState = {
+      current: null,
+      isSubmitting: false,
+    };
+
+    if (elements.survey) {
+      void loadActiveSurvey();
+    }
+
+    trackEvent('widget_init', { referrer: document.referrer || undefined });
+    trackEvent('page_view', { referrer: document.referrer || undefined });
 
     const triggerScenario = createScenarioHandler({
       elements,
@@ -176,6 +277,7 @@
       toggleWindow,
       texts,
       appendMessage,
+      trackEvent,
     });
 
     setupScenarioAutomation({ scenarioMap, triggerScenario });
@@ -190,6 +292,7 @@
     });
 
     elements.toggle.addEventListener('click', () => {
+      trackEvent('toggle_click', { next: state.isOpen ? 'close' : 'open' });
       toggleWindow(!state.isOpen);
     });
 
@@ -214,18 +317,25 @@
       }
     });
 
-    elements.quickPromptButtons.forEach((btn) => {
+    elements.quickPromptButtons.forEach((btn, index) => {
       btn.addEventListener('click', () => {
+        const prompt = btn.dataset.prompt || '';
+        trackEvent('quick_prompt_click', { prompt, index, label: prompt });
         toggleWindow(true);
-        void handleSend(btn.dataset.prompt || '');
+        void handleSend(prompt);
       });
     });
 
-    elements.feedbackButtons.forEach((btn) => {
+    elements.feedbackButtons.forEach((btn, index) => {
       btn.addEventListener('click', () => {
         elements.feedbackBar.dataset.state = 'submitted';
         elements.feedbackLabel.textContent = texts.feedback.thanks;
         const prompt = btn.dataset.prompt;
+        trackEvent('feedback_vote', {
+          prompt,
+          label: prompt,
+          sentiment: index === 0 ? 'positive' : 'negative',
+        });
         if (prompt) {
           toggleWindow(true);
           void handleSend(prompt);
@@ -236,12 +346,16 @@
     autoResizeTextArea();
 
     function toggleWindow(open) {
+      const previous = state.isOpen;
       state.isOpen = open;
       elements.window.classList.toggle('hidden', !state.isOpen);
       elements.toggle.setAttribute('aria-expanded', String(state.isOpen));
       if (state.isOpen) {
         resetUnread();
         elements.textarea.focus();
+      }
+      if (previous !== open) {
+        trackEvent('widget_toggle', { state: open ? 'opened' : 'closed' });
       }
     }
 
@@ -263,6 +377,255 @@
       elements.unread.hidden = false;
     }
 
+    async function loadActiveSurvey() {
+      if (!elements.survey) return;
+      try {
+        const response = await fetch(surveyLookupEndpoint);
+        if (!response.ok) {
+          return;
+        }
+        const data = await response.json();
+        const survey = data?.survey;
+        if (survey && survey.definition?.questions?.length) {
+          surveyState.current = survey;
+          renderSurveyCard(survey);
+          trackEvent('survey_view', { surveyId: survey.id });
+        }
+      } catch (error) {
+        console.warn('[palompy] survey load failed', error);
+      }
+    }
+
+    function renderSurveyCard(survey) {
+      const container = elements.survey;
+      if (!container) return;
+      const questions = survey.definition?.questions || [];
+      if (!questions.length) {
+        container.hidden = true;
+        return;
+      }
+      container.hidden = false;
+      container.innerHTML = '';
+      container.dataset.state = 'ready';
+
+      const title = document.createElement('h5');
+      title.textContent = survey.title || texts.survey.title;
+      container.appendChild(title);
+
+      const description = document.createElement('p');
+      description.className = 'palompy-survey-description';
+      description.textContent = survey.description || texts.survey.description;
+      container.appendChild(description);
+
+      const form = document.createElement('form');
+      form.className = 'palompy-survey-form';
+
+      const questionsWrapper = document.createElement('div');
+      questionsWrapper.className = 'palompy-survey-questions';
+
+      questions.forEach((question) => {
+        const node = buildSurveyQuestion(question);
+        if (node) {
+          questionsWrapper.appendChild(node);
+        }
+      });
+
+      const footer = document.createElement('div');
+      footer.className = 'palompy-survey-footer';
+
+      const skipButton = document.createElement('button');
+      skipButton.type = 'button';
+      skipButton.className = 'palompy-survey-skip';
+      skipButton.textContent = texts.survey.skip;
+
+      const submitButton = document.createElement('button');
+      submitButton.type = 'submit';
+      submitButton.className = 'palompy-survey-submit';
+      submitButton.textContent = texts.survey.cta;
+
+      const status = document.createElement('p');
+      status.className = 'palompy-survey-status';
+
+      footer.appendChild(skipButton);
+      footer.appendChild(submitButton);
+
+      form.appendChild(questionsWrapper);
+      form.appendChild(footer);
+      form.appendChild(status);
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        void submitSurveyForm(form, submitButton, status);
+      });
+
+      skipButton.addEventListener('click', () => {
+        container.hidden = true;
+        surveyState.current = null;
+        trackEvent('survey_skip', { surveyId: survey.id });
+      });
+
+      container.appendChild(form);
+    }
+
+    function buildSurveyQuestion(question) {
+      if (!question || !question.id || !question.prompt) {
+        return null;
+      }
+      const wrapper = document.createElement('div');
+      wrapper.className = 'palompy-survey-question';
+      const title = document.createElement('p');
+      title.className = 'palompy-survey-question-title';
+      title.textContent = question.prompt;
+      if (!question.required && texts.survey.optionalLabel) {
+        const optional = document.createElement('span');
+        optional.className = 'palompy-survey-optional';
+        optional.textContent = texts.survey.optionalLabel;
+        title.appendChild(optional);
+      }
+      wrapper.appendChild(title);
+
+      if (question.type === 'text') {
+        const textarea = document.createElement('textarea');
+        textarea.name = question.id;
+        textarea.rows = 3;
+        if (question.required) {
+          textarea.required = true;
+        }
+        wrapper.appendChild(textarea);
+        return wrapper;
+      }
+
+      const options = question.options || [];
+      if (!options.length) {
+        return null;
+      }
+      const optionsWrapper = document.createElement('div');
+      optionsWrapper.className = 'palompy-survey-options';
+
+      options.forEach((option, index) => {
+        const optionId = `palompy-${question.id}-${option.id || index}`;
+        const optionLabel = document.createElement('label');
+        optionLabel.className = 'palompy-survey-option';
+        optionLabel.setAttribute('for', optionId);
+
+        const labelText = option.label || option.id || String(index + 1);
+
+        const input = document.createElement('input');
+        input.type = question.type === 'multi-choice' ? 'checkbox' : 'radio';
+        input.name = question.id;
+        input.id = optionId;
+        input.value = option.id || option.label || String(index);
+        if (question.required && question.type !== 'multi-choice') {
+          input.required = true;
+        }
+        input.addEventListener('change', () => {
+          trackEvent('survey_option_click', {
+            questionId: question.id,
+            optionId: input.value,
+            label: labelText,
+          });
+        });
+
+        const text = document.createElement('span');
+        text.textContent = labelText;
+
+        optionLabel.appendChild(input);
+        optionLabel.appendChild(text);
+        optionsWrapper.appendChild(optionLabel);
+      });
+
+      wrapper.appendChild(optionsWrapper);
+      return wrapper;
+    }
+
+    async function submitSurveyForm(form, submitButton, statusEl) {
+      const survey = surveyState.current;
+      const container = elements.survey;
+      if (!survey || !container || surveyState.isSubmitting) {
+        return;
+      }
+      const questions = survey.definition?.questions || [];
+      const formData = new FormData(form);
+      const answers = {};
+      const missing = [];
+      questions.forEach((question) => {
+        if (!question || !question.id) return;
+        if (question.type === 'multi-choice') {
+          const values = formData
+            .getAll(question.id)
+            .map((value) => String(value))
+            .filter(Boolean);
+          if (values.length) {
+            answers[question.id] = values;
+          }
+          if (question.required && values.length === 0) {
+            missing.push(question.id);
+          }
+          return;
+        }
+        const value = formData.get(question.id);
+        const normalized = value ? String(value).trim() : '';
+        if (normalized) {
+          answers[question.id] = normalized;
+        }
+        if (question.required && !normalized) {
+          missing.push(question.id);
+        }
+      });
+
+      if (missing.length || !Object.keys(answers).length) {
+        statusEl.textContent = texts.survey.requiredWarning;
+        statusEl.dataset.state = 'error';
+        return;
+      }
+
+      surveyState.isSubmitting = true;
+      submitButton.disabled = true;
+      statusEl.textContent = texts.survey.sending;
+      statusEl.dataset.state = 'pending';
+
+      try {
+        const focusedMsSnapshot =
+          analyticsState.focusedMs +
+          (analyticsState.visibleStartedAt ? Date.now() - analyticsState.visibleStartedAt : 0);
+        const response = await fetch(`${surveyResponsesEndpoint}/${survey.id}/responses`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId,
+            answers,
+            metadata: {
+              language,
+              page: window.location.href,
+              focusedMs: focusedMsSnapshot,
+            },
+          }),
+        });
+        if (!response.ok) {
+          throw new Error(`Network error: ${response.status}`);
+        }
+        container.dataset.state = 'submitted';
+        container.innerHTML = '';
+        const success = document.createElement('p');
+        success.className = 'palompy-survey-success';
+        success.textContent = texts.survey.success;
+        container.appendChild(success);
+        surveyState.current = null;
+        trackEvent('survey_submit', {
+          surveyId: survey.id,
+          answersCount: Object.keys(answers).length,
+        });
+      } catch (error) {
+        console.error('[palompy] survey submit failed', error);
+        statusEl.textContent = texts.survey.error;
+        statusEl.dataset.state = 'error';
+        submitButton.disabled = false;
+        trackEvent('survey_error', { surveyId: survey.id });
+      } finally {
+        surveyState.isSubmitting = false;
+      }
+    }
+
     async function handleSend(prefilledMessage) {
       if (state.isSending) return;
       const message = (prefilledMessage ?? elements.textarea.value).trim();
@@ -271,6 +634,8 @@
       appendMessage(message, 'user');
       elements.textarea.value = '';
       autoResizeTextArea();
+
+      trackEvent('message_sent', { length: message.length, prefilled: Boolean(prefilledMessage) });
 
       state.isSending = true;
       updateStatus('connecting');
@@ -289,11 +654,13 @@
         const data = await response.json();
         const answer = (data.answer || texts.fallbackAnswer).toString();
         appendMessage(answer, 'bot');
+        trackEvent('message_answered', { length: answer.length });
       } catch (error) {
         encounteredError = true;
         console.error('[palompy] chat error', error);
         appendMessage(texts.errorAnswer, 'bot');
         updateStatus('offline');
+        trackEvent('message_failed', { reason: error instanceof Error ? error.message : 'unknown' });
       } finally {
         state.isSending = false;
         if (!encounteredError) {
@@ -453,6 +820,10 @@
         quickPromptWrapper.appendChild(quickGrid);
       }
 
+      const surveyWrapper = document.createElement('div');
+      surveyWrapper.className = 'palompy-survey';
+      surveyWrapper.hidden = true;
+
       const feedbackBar = document.createElement('div');
       feedbackBar.className = 'palompy-feedback';
       feedbackBar.hidden = true;
@@ -513,6 +884,7 @@
       if (quickPrompts.length) {
         windowEl.appendChild(quickPromptWrapper);
       }
+      windowEl.appendChild(surveyWrapper);
       windowEl.appendChild(feedbackBar);
       windowEl.appendChild(inputWrapper);
 
@@ -537,6 +909,7 @@
         feedbackBar,
         feedbackButtons: [likeBtn, dislikeBtn],
         feedbackLabel,
+        survey: surveyWrapper,
       };
     }
   }
@@ -627,6 +1000,7 @@
     toggleWindow,
     texts,
     appendMessage,
+    trackEvent,
   }) {
     return function triggerScenario(key, overrideMessage) {
       const scenario = scenarioMap.get(key);
@@ -635,6 +1009,10 @@
           appendMessage(overrideMessage, 'bot');
         }
         return;
+      }
+
+      if (typeof trackEvent === 'function') {
+        trackEvent('scenario_trigger', { key: scenario.key });
       }
 
       if (scenario.open !== false) {

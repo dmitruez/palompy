@@ -334,6 +334,126 @@
   background: rgba(92, 90, 230, 0.06);
 }
 
+.palompy-survey {
+  padding: 18px 20px;
+  border-top: 1px solid var(--palompy-border);
+  border-bottom: 1px solid var(--palompy-border);
+  background: var(--palompy-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.palompy-survey[hidden] {
+  display: none !important;
+}
+
+.palompy-survey h5 {
+  margin: 0;
+  font-size: 15px;
+  color: var(--palompy-text);
+}
+
+.palompy-survey-description {
+  margin: 0;
+  font-size: 13px;
+  color: var(--palompy-muted);
+}
+
+.palompy-survey-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.palompy-survey-question-title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--palompy-text);
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.palompy-survey-optional {
+  font-size: 11px;
+  color: var(--palompy-muted);
+  text-transform: uppercase;
+}
+
+.palompy-survey-question textarea {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--palompy-border);
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.palompy-survey-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.palompy-survey-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--palompy-border);
+  cursor: pointer;
+}
+
+.palompy-survey-option input {
+  accent-color: var(--palompy-primary);
+}
+
+.palompy-survey-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.palompy-survey-skip {
+  border: none;
+  background: transparent;
+  color: var(--palompy-muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.palompy-survey-submit {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, var(--palompy-primary), var(--palompy-accent));
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 10px 25px rgba(92, 90, 230, 0.25);
+}
+
+.palompy-survey-status {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--palompy-muted);
+}
+
+.palompy-survey-status[data-state='error'] {
+  color: #ff5470;
+}
+
+.palompy-survey-success {
+  margin: 0;
+  font-size: 14px;
+  color: var(--palompy-primary-strong);
+  font-weight: 600;
+}
+
 .palompy-feedback {
   padding: 16px 20px;
   border-top: 1px solid var(--palompy-border);
