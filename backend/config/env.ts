@@ -31,4 +31,8 @@ export const env = {
   openaiApiKey: process.env.OPENAI_API_KEY ?? '',
   openaiModel: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
   openaiBaseUrl: process.env.OPENAI_BASE_URL ?? 'https://api.openai.com/v1',
+  databaseUrl: process.env.DATABASE_URL ?? 'postgres://postgres:postgres@localhost:5432/postgres',
+  apiJwtSecret: process.env.API_JWT_SECRET ?? 'change-me',
+  thirdPartyApiBaseUrl: process.env.THIRD_PARTY_API_BASE_URL ?? 'https://example.com/api/',
+  thirdPartyApiKey: process.env.THIRD_PARTY_API_KEY ?? '',
 };

@@ -1,0 +1,29 @@
+import NextAuth from 'next-auth';
+
+declare module 'next-auth' {
+  interface Session {
+    user?: {
+      id?: string;
+      name?: string | null;
+      email?: string | null;
+      subscription?: {
+        id: number;
+        status: string;
+        currentPeriodEnd: string;
+      } | null;
+    };
+  }
+
+  interface User {
+    id: string;
+  }
+
+  interface JWT {
+    id?: string;
+    subscription?: {
+      id: number;
+      status: string;
+      currentPeriodEnd: string;
+    } | null;
+  }
+}

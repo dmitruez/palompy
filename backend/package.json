@@ -8,6 +8,8 @@
     "dev": "tsc -p tsconfig.json --watch",
     "start": "node dist/src/index.js"
   },
-  "dependencies": {},
+  "dependencies": {
+    "pg": "^8.11.5"
+  },
   "devDependencies": {}
 }

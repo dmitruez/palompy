@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2024",
-    "lib": ["ES2024"],
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
     "module": "commonjs",
     "moduleResolution": "node",
     "rootDir": ".",
@@ -25,6 +25,8 @@
     "utils/**/*.ts",
     "http/**/*.ts",
     "storage/**/*.ts",
+    "db/**/*.ts",
+    "server/**/*.ts",
     "types/**/*.d.ts"
   ],
   "ts-node": {
