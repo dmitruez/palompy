@@ -32,6 +32,7 @@ export default async function SubscriptionPage({ searchParams }: PageProps) {
 
   return (
     <SubscriptionManager
+      userId={Number(session.user.id)}
       userEmail={session.user.email ?? ''}
       subscription={normalizedSubscription}
       initialSessionId={sessionId}

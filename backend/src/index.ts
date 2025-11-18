@@ -4,6 +4,7 @@ import routes from '../routes';
 import { compileRoutes, matchRoute } from '../http/router';
 import { HttpError } from '../http/errors';
 import { HttpMethod, RouteContext, RouteResponse } from '../http/types';
+import { attachMetricsTracker } from '../middleware/metricsMiddleware';
 
 const compiledRoutes = compileRoutes(routes);
 const JSON_LIMIT = 2 * 1024 * 1024; // 2mb
@@ -97,6 +98,7 @@ function sendError(res: any, error: HttpError | Error): void {
 
 const server = http.createServer(async (req: any, res: any) => {
   const startedAt = Date.now();
+  const tracker = attachMetricsTracker(req, res);
   try {
     const method = (req.method ?? 'GET').toUpperCase() as HttpMethod;
     if (method === 'OPTIONS') {
@@ -111,6 +113,7 @@ const server = http.createServer(async (req: any, res: any) => {
     if (!match) {
       throw new HttpError(404, 'Маршрут не найден');
     }
+    tracker.setRoutePath(match.route.path ?? url.pathname);
     const body = method === 'GET' ? undefined : await readBody(req);
     const context: RouteContext = {
       request: {

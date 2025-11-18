@@ -9,12 +9,14 @@ export interface CompiledRoute {
   method: HttpMethod;
   segments: RouteSegment[];
   handler: RouteDefinition['handler'];
+  path: string;
 }
 
 export function compileRoutes(routes: RouteDefinition[]): CompiledRoute[] {
   return routes.map((route) => ({
     method: route.method,
     handler: route.handler,
+    path: route.path,
     segments: route.path
       .split('/')
       .filter(Boolean)
