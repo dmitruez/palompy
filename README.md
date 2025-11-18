@@ -20,6 +20,8 @@
 5. **Stripe** (ключ и ID тарифа) — чтобы страница подписки в Next.js могла создавать checkout-сессии.
 6. **Готовый домен + Nginx** — для TLS-терминации и проксирования `/api` (см. `infrastructure/nginx/palompy.conf`).
 
+> Если не хочется поднимать PostgreSQL и Redis вручную, используйте `docker compose`-стек из `infrastructure/docker`. Он поднимает PostgreSQL 16, Redis 7 и pgAdmin4 одной командой и одинаково хорошо работает на VPS с Ubuntu и на локальной машине. Подробности в `infrastructure/docker/README.md`.
+
 ## Подготовка базы данных
 
 1. Создайте отдельную БД `palompy` и пользователя с правами на неё.
