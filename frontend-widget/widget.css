@@ -1,643 +1,542 @@
 :root {
-  --palompy-primary: #5c5ae6;
-  --palompy-primary-strong: #3c3ac8;
-  --palompy-accent: #a854ff;
-  --palompy-surface: #ffffff;
-  --palompy-surface-alt: #f6f6fb;
-  --palompy-surface-glass: rgba(255, 255, 255, 0.85);
-  --palompy-border: rgba(15, 23, 42, 0.08);
-  --palompy-text: #141322;
-  --palompy-muted: #6c6a80;
-  --palompy-shadow: 0 28px 70px rgba(15, 23, 42, 0.25);
-  --palompy-radius: 22px;
-  --palompy-blur: 16px;
+    --palompy-primary: #5c5ae6;
+    --palompy-primary-strong: #3c3ac8;
+    --palompy-accent: #a854ff;
+    --palompy-surface: #ffffff;
+    --palompy-surface-alt: #f6f6fb;
+    --palompy-border: rgba(15, 23, 42, 0.08);
+    --palompy-text: #141322;
+    --palompy-background-message: rgba(118, 82, 82, 0.05);
+    --palompy-muted: #6c6a80;
+    --palompy-shadow: 0 24px 60px rgba(15, 23, 42, 0.35);
+    --palompy-radius: 20px;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --palompy-primary: #8d88ff;
-    --palompy-primary-strong: #625df1;
-    --palompy-accent: #c37cff;
-    --palompy-surface: #181827;
-    --palompy-surface-alt: #1f1f33;
-    --palompy-surface-glass: rgba(24, 24, 39, 0.9);
-    --palompy-border: rgba(255, 255, 255, 0.08);
-    --palompy-text: #f6f6fb;
-    --palompy-muted: #b1b0c7;
-    --palompy-shadow: 0 28px 80px rgba(4, 6, 13, 0.65);
-  }
+    :root {
+        --palompy-primary: #8d88ff;
+        --palompy-primary-strong: #625df1;
+        --palompy-accent: #c37cff;
+        --palompy-surface: #181827;
+        --palompy-surface-alt: #1f1f33;
+        --palompy-border: rgba(255, 255, 255, 0.05);
+        --palompy-text: #f6f6fb;
+        --palompy-background-message: rgba(118, 82, 82, 0.05);
+        --palompy-muted: #a3a2bc;
+        --palompy-shadow: 0 26px 70px rgba(4, 6, 13, 0.75);
+    }
 }
+
+/* Общие настройки */
 
 .palompy-chat-toggle,
 .palompy-chat-window,
 .palompy-chat-window * {
-  font-family: 'Inter', 'SF Pro Display', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  box-sizing: border-box;
+    box-sizing: border-box;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI',
+    sans-serif;
 }
 
+/* === Тоггл-кнопка чата === */
+
 .palompy-chat-toggle {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 64px;
-  height: 64px;
-  border-radius: 999px;
-  border: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(circle at 20% 20%, var(--palompy-accent), var(--palompy-primary));
-  color: #fff;
-  cursor: pointer;
-  box-shadow: var(--palompy-shadow);
-  z-index: 2147483000;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 60px;
+    height: 60px;
+    border-radius: 999px;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 20% 20%, var(--palompy-accent), var(--palompy-primary));
+    color: #fff;
+    cursor: pointer;
+    box-shadow: var(--palompy-shadow);
+    z-index: 2147483000;
+    transition:
+            transform 0.22s ease,
+            box-shadow 0.22s ease,
+            background 0.22s ease;
 }
 
 .palompy-chat-toggle:hover {
-  transform: translateY(-2px) scale(1.02);
+    transform: translateY(-2px) scale(1.02);
 }
 
 .palompy-chat-toggle:active {
-  transform: scale(0.96);
+    transform: scale(0.96);
+}
+
+.palompy-chat-toggle--has-unread {
+    animation: palompy-pulse 1.6s ease-out infinite;
 }
 
 .palompy-toggle-icon svg {
-  display: block;
+    display: block;
 }
 
 .palompy-unread-badge {
-  position: absolute;
-  top: 0;
-  right: 0;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: #ff5470;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 6px 12px rgba(255, 84, 112, 0.5);
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #ff5470;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 12px rgba(255, 84, 112, 0.55);
 }
 
+/* === Окно чата === */
+
 .palompy-chat-window {
-  position: fixed;
-  bottom: 104px;
-  right: 24px;
-  width: 360px;
-  max-width: calc(100vw - 32px);
-  height: min(640px, calc(100vh - 120px));
-  max-height: calc(100vh - 120px);
-  min-height: 420px;
-  border-radius: var(--palompy-radius);
-  background: var(--palompy-surface);
-  box-shadow: var(--palompy-shadow);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  z-index: 2147483001;
-  border: 1px solid var(--palompy-border);
-  transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+    position: fixed;
+    bottom: 100px;
+    right: 24px;
+    width: 380px;
+    max-width: calc(100vw - 32px);
+    height: min(620px, calc(100vh - 120px));
+    max-height: calc(100vh - 120px);
+    min-height: 380px;
+    border-radius: var(--palompy-radius);
+    background: var(--palompy-surface);
+    box-shadow: var(--palompy-shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 2147483001;
+    border: 1px solid var(--palompy-border);
+    transition:
+            opacity 0.22s ease,
+            transform 0.22s ease,
+            visibility 0.22s ease;
+}
+
+.palompy-chat-window--wide {
+    width: 620px;
+    max-width: calc(100vw - 40px);
 }
 
 .palompy-chat-window.hidden {
-  opacity: 0;
-  transform: translateY(16px) scale(0.98);
-  visibility: hidden;
-  pointer-events: none;
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+    visibility: hidden;
+    pointer-events: none;
 }
 
-.palompy-chat-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  background: var(--palompy-surface);
-  padding-bottom: 12px;
-  gap: 0;
-  scrollbar-width: thin;
-}
+/* Header */
 
 .palompy-chat-header {
-  padding: 18px 20px 12px 20px;
-  background: linear-gradient(135deg, rgba(92, 90, 230, 0.15), rgba(168, 84, 255, 0.3));
-  border-bottom: 1px solid var(--palompy-border);
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
+    padding: 14px 16px;
+    background: linear-gradient(
+            135deg,
+            rgba(92, 90, 230, 0.16),
+            rgba(168, 84, 255, 0.28),
+            rgba(255, 255, 255, 0.1)
+    );
+    border-bottom: 1px solid var(--palompy-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    backdrop-filter: blur(14px);
 }
 
-.palompy-chat-header-text h4 {
-  margin: 0;
-  font-size: 17px;
-  color: var(--palompy-text);
+.palompy-chat-header-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
 }
 
-.palompy-chat-header-text p {
-  margin: 4px 0 0;
-  color: var(--palompy-muted);
-  font-size: 13px;
+.palompy-chat-header-main h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--palompy-text);
 }
 
-.palompy-hero {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 12px;
-  padding: 10px 14px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(var(--palompy-blur));
-  color: var(--palompy-text);
-  font-size: 13px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+.palompy-chat-header-subrow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--palompy-muted);
+    font-size: 13px;
+    flex-wrap: wrap;
 }
 
-.palompy-hero strong {
-  font-size: 14px;
+.palompy-chat-subtitle {
+    white-space: nowrap;
+}
+
+.palompy-status-chip {
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.85);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--palompy-primary-strong);
+}
+
+@media (prefers-color-scheme: dark) {
+    .palompy-status-chip {
+        background: rgba(15, 23, 42, 0.9);
+        border-color: rgba(148, 163, 184, 0.5);
+    }
 }
 
 .palompy-chat-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
+/* Индикатор статуса */
+
 .palompy-status-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 999px;
-  background: #a1a1aa;
-  position: relative;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: #a1a1aa;
+    position: relative;
+    flex-shrink: 0;
 }
 
 .palompy-status-dot::after {
-  content: '';
-  position: absolute;
-  inset: -4px;
-  border-radius: inherit;
-  background: currentColor;
-  opacity: 0.25;
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: inherit;
+    background: currentColor;
+    opacity: 0.22;
 }
 
 .palompy-status-dot[data-state='ready'] {
-  color: #3fdd95;
+    color: #3fdd95;
+    background: currentColor;
 }
 
 .palompy-status-dot[data-state='connecting'] {
-  color: #ffb347;
+    color: #ffb347;
+    background: currentColor;
 }
 
 .palompy-status-dot[data-state='offline'] {
-  color: #ff5f6d;
+    color: #ff5f6d;
+    background: currentColor;
 }
 
+/* Кнопки хедера */
+
+.palompy-size-toggle,
 .palompy-close {
-  border: none;
-  background: rgba(255, 255, 255, 0.4);
-  color: var(--palompy-text);
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background 0.2s ease;
+    border: none;
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--palompy-text);
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    transition:
+            background 0.18s ease,
+            transform 0.18s ease,
+            box-shadow 0.18s ease;
 }
 
+.palompy-size-toggle svg,
+.palompy-close svg {
+    pointer-events: none;
+}
+
+.palompy-size-toggle:hover,
 .palompy-close:hover {
-  background: rgba(0, 0, 0, 0.08);
+    background: rgba(0, 0, 0, 0.06);
+    box-shadow: 0 8px 16px rgba(15, 23, 42, 0.16);
 }
 
-.palompy-perks {
-  padding: 12px 20px 0 20px;
-  border-bottom: 1px solid var(--palompy-border);
+.palompy-size-toggle:active,
+.palompy-close:active {
+    transform: scale(0.94);
 }
 
-.palompy-perks,
-.palompy-quick-prompts,
-.palompy-survey,
-.palompy-feedback {
-  flex-shrink: 0;
+@media (prefers-color-scheme: dark) {
+    .palompy-size-toggle,
+    .palompy-close {
+        background: rgba(30, 41, 59, 0.9);
+    }
 }
 
-.palompy-perks > p {
-  margin: 0 0 8px;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--palompy-muted);
+/* Тело чата */
+
+.palompy-chat-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--palompy-surface-alt);
+    padding: 10px 12px 8px;
+    gap: 8px;
+    min-height: 0;
 }
 
-.palompy-perks-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-  gap: 10px;
-}
-
-.palompy-perk-card {
-  padding: 12px;
-  border-radius: 16px;
-  background: var(--palompy-surface-glass);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(var(--palompy-blur));
-}
-
-.palompy-perk-card h5 {
-  margin: 4px 0 4px;
-  font-size: 13px;
-  color: var(--palompy-text);
-}
-
-.palompy-perk-card p {
-  margin: 0;
-  font-size: 12px;
-  color: var(--palompy-muted);
-}
-
-.palompy-perk-icon {
-  display: inline-flex;
-  width: 28px;
-  height: 28px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  background: rgba(92, 90, 230, 0.1);
-  font-size: 16px;
-}
+/* Список сообщений */
 
 .palompy-chat-messages {
-  flex: 1 1 auto;
-  padding: 18px 20px;
-  overflow-y: auto;
-  background: var(--palompy-surface-alt);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-height: 200px;
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-right: 4px;
+    min-height: 120px;
 }
 
+/* Красивая прокрутка */
+
+.palompy-chat-messages,
+.palompy-chat-input textarea {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.8) transparent;
+}
+
+.palompy-chat-messages::-webkit-scrollbar,
+.palompy-chat-input textarea::-webkit-scrollbar {
+    width: 7px;
+}
+
+.palompy-chat-messages::-webkit-scrollbar-track,
+.palompy-chat-input textarea::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.palompy-chat-messages::-webkit-scrollbar-thumb,
+.palompy-chat-input textarea::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.8);
+    border-radius: 999px;
+}
+
+/* Сообщения */
+
 .palompy-chat-message {
-  display: flex;
+    display: flex;
 }
 
 .palompy-chat-message.user {
-  justify-content: flex-end;
-}
-
-.palompy-chat-message + .palompy-chat-message {
-  animation: palompy-slide-in 0.25s ease;
+    justify-content: flex-end;
 }
 
 .palompy-chat-bubble {
-  max-width: 82%;
-  padding: 12px 16px;
-  border-radius: 18px;
-  font-size: 14px;
-  line-height: 1.45;
-  color: var(--palompy-text);
-  background: #fff;
-  border: 1px solid rgba(20, 19, 34, 0.05);
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-  white-space: pre-wrap;
-}
-
-.palompy-chat-message.user .palompy-chat-bubble {
-  background: linear-gradient(135deg, var(--palompy-primary), var(--palompy-accent));
-  color: #fff;
-  border: none;
-  border-bottom-right-radius: 6px;
+    max-width: 82%;
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--palompy-text);
+    background: #ffffff;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+    white-space: pre-wrap;
 }
 
 .palompy-chat-message.bot .palompy-chat-bubble {
-  border-bottom-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+    background: var(--palompy-background-message);
 }
+
+.palompy-chat-message.user .palompy-chat-bubble {
+    background: linear-gradient(135deg, var(--palompy-primary), var(--palompy-accent));
+    color: #fff;
+    border: none;
+    border-bottom-right-radius: 6px;
+}
+
+/* Быстрые подсказки */
 
 .palompy-quick-prompts {
-  padding: 14px 20px 4px;
-  border-top: 1px solid var(--palompy-border);
-  background: var(--palompy-surface);
-}
-
-.palompy-quick-prompts p {
-  margin: 0 0 8px;
-  font-size: 13px;
-  color: var(--palompy-muted);
+    flex-shrink: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
 }
 
 .palompy-quick-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
 }
 
 .palompy-quick-button {
-  border: 1px solid var(--palompy-border);
-  border-radius: 999px;
-  padding: 6px 12px;
-  font-size: 13px;
-  background: transparent;
-  color: var(--palompy-text);
-  cursor: pointer;
-  transition: border 0.2s ease, color 0.2s ease, background 0.2s ease;
+    border-radius: 999px;
+    border: 1px solid var(--palompy-border);
+    padding: 6px 10px;
+    font-size: 12px;
+    background: var(--palompy-background-message);
+    color: var(--palompy-muted);
+    cursor: pointer;
+    transition:
+            background 0.16s ease,
+            border-color 0.16s ease,
+            color 0.16s ease,
+            transform 0.16s ease;
 }
 
 .palompy-quick-button:hover {
-  border-color: var(--palompy-primary);
-  color: var(--palompy-primary);
-  background: rgba(92, 90, 230, 0.06);
+    border-color: var(--palompy-primary);
+    color: var(--palompy-primary);
+    background: rgba(92, 90, 230, 0.04);
+    transform: translateY(-1px);
 }
 
-.palompy-survey {
-  padding: 18px 20px;
-  border-top: 1px solid var(--palompy-border);
-  border-bottom: 1px solid var(--palompy-border);
-  background: var(--palompy-surface);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.palompy-survey[hidden] {
-  display: none !important;
-}
-
-.palompy-survey h5 {
-  margin: 0;
-  font-size: 15px;
-  color: var(--palompy-text);
-}
-
-.palompy-survey-description {
-  margin: 0;
-  font-size: 13px;
-  color: var(--palompy-muted);
-}
-
-.palompy-survey-questions {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.palompy-survey-question-title {
-  margin: 0 0 6px;
-  font-size: 13px;
-  color: var(--palompy-text);
-  display: flex;
-  gap: 6px;
-  align-items: baseline;
-}
-
-.palompy-survey-optional {
-  font-size: 11px;
-  color: var(--palompy-muted);
-  text-transform: uppercase;
-}
-
-.palompy-survey-question textarea {
-  width: 100%;
-  border-radius: 12px;
-  border: 1px solid var(--palompy-border);
-  padding: 8px 10px;
-  font-size: 13px;
-  font-family: inherit;
-  resize: vertical;
-}
-
-.palompy-survey-options {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.palompy-survey-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 12px;
-  border: 1px solid var(--palompy-border);
-  cursor: pointer;
-}
-
-.palompy-survey-option input {
-  accent-color: var(--palompy-primary);
-}
-
-.palompy-survey-footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  align-items: center;
-}
-
-.palompy-survey-skip {
-  border: none;
-  background: transparent;
-  color: var(--palompy-muted);
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.palompy-survey-submit {
-  border: none;
-  border-radius: 12px;
-  padding: 10px 16px;
-  background: linear-gradient(135deg, var(--palompy-primary), var(--palompy-accent));
-  color: #fff;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 10px 25px rgba(92, 90, 230, 0.25);
-}
-
-.palompy-survey-status {
-  margin: 6px 0 0;
-  font-size: 12px;
-  color: var(--palompy-muted);
-}
-
-.palompy-survey-status[data-state='error'] {
-  color: #ff5470;
-}
-
-.palompy-survey-success {
-  margin: 0;
-  font-size: 14px;
-  color: var(--palompy-primary-strong);
-  font-weight: 600;
-}
-
-.palompy-feedback {
-  padding: 16px 20px;
-  border-top: 1px solid var(--palompy-border);
-  border-bottom: 1px solid var(--palompy-border);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background: rgba(92, 90, 230, 0.05);
-}
-
-.palompy-feedback[hidden] {
-  display: none !important;
-}
-
-.palompy-feedback-title {
-  margin: 0;
-  font-size: 13px;
-  color: var(--palompy-text);
-}
-
-.palompy-feedback-label {
-  font-size: 12px;
-  color: var(--palompy-muted);
-}
-
-.palompy-feedback-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.palompy-feedback-button {
-  flex: 1;
-  min-width: 130px;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  padding: 8px 12px;
-  background: var(--palompy-surface);
-  color: var(--palompy-text);
-  font-weight: 600;
-  cursor: pointer;
-  transition: border 0.2s ease, transform 0.2s ease;
-}
-
-.palompy-feedback-button:hover {
-  border-color: var(--palompy-primary);
-  transform: translateY(-1px);
-}
-
-.palompy-feedback[data-state='submitted'] .palompy-feedback-buttons {
-  opacity: 0.5;
-  pointer-events: none;
-}
+/* Инпут */
 
 .palompy-chat-input {
-  padding: 14px 20px 18px;
-  border-top: 1px solid var(--palompy-border);
-  background: var(--palompy-surface);
+    border-top: 1px solid var(--palompy-border);
+    background: var(--palompy-surface);
+    padding: 10px 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .palompy-chat-form {
-  display: flex;
-  gap: 10px;
-  align-items: flex-end;
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
 }
 
-.palompy-chat-form textarea {
-  flex: 1;
-  resize: none;
-  border-radius: 16px;
-  border: 1px solid var(--palompy-border);
-  padding: 10px 14px;
-  min-height: 48px;
-  max-height: 160px;
-  font-size: 14px;
-  font-family: inherit;
-  line-height: 1.4;
-  color: var(--palompy-text);
-  background: var(--palompy-surface-alt);
+.palompy-chat-input textarea {
+    flex: 1;
+    resize: none;
+    border-radius: 14px;
+    border: 1px solid var(--palompy-border);
+    padding: 9px 12px;
+    min-height: 44px;
+    max-height: 160px;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--palompy-text);
+    background: var(--palompy-surface-alt);
+    outline: none;
+    transition:
+            border-color 0.16s ease,
+            background 0.16s ease,
+            box-shadow 0.16s ease;
 }
 
-.palompy-chat-form textarea:focus {
-  outline: 2px solid rgba(92, 90, 230, 0.4);
-  border-color: transparent;
-  background: var(--palompy-surface);
+.palompy-chat-input textarea:focus {
+    border-color: var(--palompy-primary);
+    background: #fff;
+    box-shadow: 0 0 0 1px rgba(92, 90, 230, 0.3);
 }
 
-.palompy-chat-form button[type='submit'] {
-  border: none;
-  border-radius: 14px;
-  background: linear-gradient(135deg, var(--palompy-primary), var(--palompy-primary-strong));
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 12px 20px;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 12px 20px rgba(92, 90, 230, 0.3);
+.palompy-chat-send {
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--palompy-primary), var(--palompy-primary-strong));
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 14px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    box-shadow: 0 14px 24px rgba(92, 90, 230, 0.35);
+    transition:
+            transform 0.16s ease,
+            box-shadow 0.16s ease,
+            opacity 0.16s ease;
 }
 
-.palompy-chat-form button[type='submit']:hover {
-  transform: translateY(-1px);
+.palompy-chat-send svg {
+    flex-shrink: 0;
 }
 
-.palompy-chat-form button[type='submit']:active {
-  transform: scale(0.96);
+.palompy-chat-send:hover {
+    transform: translateY(-1px);
 }
 
-.palompy-chat-form button[type='submit']:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.palompy-chat-send:active {
+    transform: scale(0.96);
 }
 
-.palompy-chat-status {
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--palompy-muted);
+.palompy-chat-send:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
 }
 
-@keyframes palompy-slide-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Статусная строка */
+
+.palompy-chat-status-line {
+    font-size: 11px;
+    color: var(--palompy-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
+
+/* Анимации */
+
+@keyframes palompy-pulse {
+    0% {
+        transform: translateY(0) scale(1);
+        box-shadow: var(--palompy-shadow);
+    }
+    50% {
+        transform: translateY(-2px) scale(1.06);
+        box-shadow: 0 32px 80px rgba(15, 23, 42, 0.5);
+    }
+    100% {
+        transform: translateY(0) scale(1);
+        box-shadow: var(--palompy-shadow);
+    }
+}
+
+/* Адаптив */
 
 @media (max-width: 600px) {
-  .palompy-chat-window {
-    right: 16px;
-    left: 16px;
-    width: auto;
-    bottom: 80px;
-    height: calc(100vh - 110px);
-    max-height: calc(100vh - 110px);
-    min-height: 360px;
-  }
+    .palompy-chat-window {
+        right: 12px;
+        left: 12px;
+        width: auto;
+        bottom: 84px;
+        height: calc(100vh - 110px);
+        max-height: calc(100vh - 110px);
+        min-height: 340px;
+    }
 
-  .palompy-chat-toggle {
-    right: 16px;
-    bottom: 16px;
-  }
+    .palompy-chat-window--wide {
+        width: auto;
+    }
 
-  .palompy-perks-grid {
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  }
-}
-
-@media (max-height: 760px) {
-  .palompy-perks {
-    display: none;
-  }
+    .palompy-chat-toggle {
+        right: 16px;
+        bottom: 16px;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .palompy-chat-toggle,
-  .palompy-chat-window,
-  .palompy-chat-form button[type='submit'],
-  .palompy-chat-message + .palompy-chat-message {
-    transition: none;
-    animation: none;
-  }
+    .palompy-chat-toggle,
+    .palompy-chat-window {
+        transition: none;
+    }
+    .palompy-chat-toggle--has-unread {
+        animation: none;
+    }
 }
