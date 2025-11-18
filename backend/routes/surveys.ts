@@ -1,100 +1,140 @@
-import { Router } from 'express';
-import { z } from 'zod';
+import { RouteDefinition } from '../http/types';
+import { json } from '../http/responses';
+import { HttpError } from '../http/errors';
 import { getShopById, getShopByPublicKey } from '../services/shopsService';
-import { createSurvey, getActiveSurveyForShop, listSurveysForShop } from '../services/surveyService';
+import {
+  createSurvey,
+  getActiveSurveyForShop,
+  listSurveysForShop,
+} from '../services/surveyService';
+import {
+  assertArray,
+  assertBoolean,
+  assertOneOf,
+  assertRecord,
+  assertString,
+  assertUuid,
+} from '../utils/validation';
 
-const router = Router();
+const surveyStatuses = ['draft', 'active', 'archived'] as const;
+const questionTypes = ['single-choice', 'multi-choice', 'text'] as const;
 
-const questionSchema = z.object({
-  id: z.string().min(1),
-  prompt: z.string().min(2),
-  type: z.enum(['single-choice', 'multi-choice', 'text']),
-  required: z.boolean().optional(),
-  options: z
-    .array(
-      z.object({
-        id: z.string().min(1),
-        label: z.string().min(1),
-      }),
-    )
-    .optional(),
-});
+type SurveyStatus = (typeof surveyStatuses)[number];
 
-const surveySchema = z.object({
-  title: z.string().min(2),
-  description: z.string().optional(),
-  status: z.enum(['draft', 'active', 'archived']).default('draft'),
-  questions: z.array(questionSchema).min(1),
-});
+type QuestionType = (typeof questionTypes)[number];
 
-router.post('/:shopId/surveys', async (req, res, next) => {
-  try {
-    const numericId = Number(req.params.shopId);
-    if (Number.isNaN(numericId)) {
-      return res.status(400).json({ error: 'Invalid shop id' });
-    }
-    const shop = await getShopById(numericId);
-    if (!shop) {
-      return res.status(404).json({ error: 'Shop not found' });
-    }
-    const payload = surveySchema.parse(req.body);
-    const survey = await createSurvey(shop.id, {
-      title: payload.title,
-      description: payload.description,
-      status: payload.status,
-      definition: { questions: payload.questions },
-    });
-    res.status(201).json({ survey });
-  } catch (error) {
-    next(error);
+function parseQuestions(value: unknown): {
+  id: string;
+  prompt: string;
+  type: QuestionType;
+  required?: boolean;
+  options?: { id: string; label: string }[];
+}[] {
+  const array = assertArray(value, 'questions');
+  if (!array.length) {
+    throw new HttpError(400, 'Нужно добавить минимум один вопрос');
   }
-});
+  return array.map((item, index) => {
+    const record = assertRecord(item, `questions[${index}]`);
+    const id = assertString(record.id, 'question.id', { minLength: 1 });
+    const prompt = assertString(record.prompt, 'question.prompt', { minLength: 2 });
+    const type = assertOneOf(record.type, 'question.type', questionTypes);
+    const question: {
+      id: string;
+      prompt: string;
+      type: QuestionType;
+      required?: boolean;
+      options?: { id: string; label: string }[];
+    } = { id, prompt, type };
+    if (record.required !== undefined) {
+      question.required = assertBoolean(record.required, 'question.required');
+    }
+    if (record.options !== undefined) {
+      const options = assertArray(record.options, 'question.options').map((option, optionIndex) => {
+        const optionRecord = assertRecord(option, `question.options[${optionIndex}]`);
+        return {
+          id: assertString(optionRecord.id, 'option.id', { minLength: 1 }),
+          label: assertString(optionRecord.label, 'option.label', { minLength: 1 }),
+        };
+      });
+      question.options = options;
+    }
+    return question;
+  });
+}
 
-router.get('/:shopId/surveys', async (req, res, next) => {
-  try {
-    const numericId = Number(req.params.shopId);
-    if (Number.isNaN(numericId)) {
-      return res.status(400).json({ error: 'Invalid shop id' });
-    }
-    const shop = await getShopById(numericId);
-    if (!shop) {
-      return res.status(404).json({ error: 'Shop not found' });
-    }
-    const surveys = await listSurveysForShop(shop.id);
-    res.json({ surveys });
-  } catch (error) {
-    next(error);
-  }
-});
+const routes: RouteDefinition[] = [
+  {
+    method: 'POST',
+    path: '/api/shops/:shopId/surveys',
+    handler: async ({ request }) => {
+      const shopId = Number(request.params.shopId);
+      if (!Number.isFinite(shopId)) {
+        throw new HttpError(400, 'Некорректный идентификатор магазина');
+      }
+      const shop = await getShopById(shopId);
+      if (!shop) {
+        throw new HttpError(404, 'Магазин не найден');
+      }
+      const body = assertRecord(request.body, 'body');
+      const title = assertString(body.title, 'title', { minLength: 2 });
+      const description = body.description ? assertString(body.description, 'description') : undefined;
+      const status = body.status ? assertOneOf<SurveyStatus>(body.status, 'status', surveyStatuses as unknown as SurveyStatus[]) : 'draft';
+      const questions = parseQuestions(body.questions);
+      const survey = await createSurvey(shop.id, {
+        title,
+        description,
+        status,
+        definition: { questions },
+      });
+      return json({ survey }, 201);
+    },
+  },
+  {
+    method: 'GET',
+    path: '/api/shops/:shopId/surveys',
+    handler: async ({ request }) => {
+      const shopId = Number(request.params.shopId);
+      if (!Number.isFinite(shopId)) {
+        throw new HttpError(400, 'Некорректный идентификатор магазина');
+      }
+      const shop = await getShopById(shopId);
+      if (!shop) {
+        throw new HttpError(404, 'Магазин не найден');
+      }
+      const surveys = await listSurveysForShop(shop.id);
+      return json({ surveys });
+    },
+  },
+  {
+    method: 'GET',
+    path: '/api/shops/:shopId/surveys/active',
+    handler: async ({ request }) => {
+      const shopId = Number(request.params.shopId);
+      if (!Number.isFinite(shopId)) {
+        throw new HttpError(400, 'Некорректный идентификатор магазина');
+      }
+      const shop = await getShopById(shopId);
+      if (!shop) {
+        throw new HttpError(404, 'Магазин не найден');
+      }
+      const survey = await getActiveSurveyForShop(shop.id);
+      return json({ survey });
+    },
+  },
+  {
+    method: 'GET',
+    path: '/api/shops/public/:publicKey/surveys/active',
+    handler: async ({ request }) => {
+      const publicKey = assertUuid(request.params.publicKey, 'publicKey');
+      const shop = await getShopByPublicKey(publicKey);
+      if (!shop) {
+        throw new HttpError(404, 'Магазин не найден');
+      }
+      const survey = await getActiveSurveyForShop(shop.id);
+      return json({ survey });
+    },
+  },
+];
 
-router.get('/:shopId/surveys/active', async (req, res, next) => {
-  try {
-    const numericId = Number(req.params.shopId);
-    if (Number.isNaN(numericId)) {
-      return res.status(400).json({ error: 'Invalid shop id' });
-    }
-    const shop = await getShopById(numericId);
-    if (!shop) {
-      return res.status(404).json({ error: 'Shop not found' });
-    }
-    const survey = await getActiveSurveyForShop(shop.id);
-    res.json({ survey });
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.get('/public/:publicKey/surveys/active', async (req, res, next) => {
-  try {
-    const shop = await getShopByPublicKey(req.params.publicKey);
-    if (!shop) {
-      return res.status(404).json({ error: 'Shop not found' });
-    }
-    const survey = await getActiveSurveyForShop(shop.id);
-    res.json({ survey });
-  } catch (error) {
-    next(error);
-  }
-});
-
-export default router;
+export default routes;

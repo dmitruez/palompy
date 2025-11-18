@@ -1,62 +1,72 @@
-import { pool } from '../config/db';
 import { AnalyticsSummary } from '../models/analytics';
+import { getDatabase, nextId, persistDatabase } from '../storage/database';
 
-interface WidgetEventRow {
-  event_name: string;
-  count: string;
-}
-
-interface ButtonRow {
-  label: string;
-  count: string;
-}
-
-export async function recordWidgetEvent(payload: {
+interface RecordEventPayload {
   shopId: number;
   sessionId: string;
   eventName: string;
   metadata?: Record<string, unknown>;
-}): Promise<void> {
-  await pool.query(
-    `INSERT INTO widget_events (shop_id, session_id, event_name, metadata)
-     VALUES ($1, $2, $3, $4)`,
-    [payload.shopId, payload.sessionId, payload.eventName, payload.metadata ?? null],
-  );
+}
+
+export async function recordWidgetEvent(payload: RecordEventPayload): Promise<void> {
+  const db = getDatabase();
+  db.widget_events.push({
+    id: nextId(db.widget_events),
+    shop_id: payload.shopId,
+    session_id: payload.sessionId,
+    event_name: payload.eventName,
+    metadata: payload.metadata ?? null,
+    created_at: new Date().toISOString(),
+  });
+  persistDatabase();
+}
+
+function countBy<T>(items: T[], selector: (item: T) => string): { name: string; count: number }[] {
+  const map = new Map<string, number>();
+  for (const item of items) {
+    const key = selector(item);
+    map.set(key, (map.get(key) ?? 0) + 1);
+  }
+  return Array.from(map.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
 }
 
 export async function getAnalyticsSummary(shopId: number): Promise<AnalyticsSummary> {
-  const [eventsResult, buttonsResult, durationResult] = await Promise.all([
-    pool.query<WidgetEventRow>(
-      `SELECT event_name, COUNT(*)::text as count
-       FROM widget_events
-       WHERE shop_id = $1
-       GROUP BY event_name
-       ORDER BY COUNT(*) DESC
-       LIMIT 50`,
-      [shopId],
-    ),
-    pool.query<ButtonRow>(
-      `SELECT COALESCE(metadata->>'label', metadata->>'buttonId', event_name) as label, COUNT(*)::text as count
-       FROM widget_events
-       WHERE shop_id = $1
-         AND metadata IS NOT NULL
-         AND (metadata ? 'label' OR metadata ? 'buttonId')
-       GROUP BY label
-       ORDER BY COUNT(*) DESC
-       LIMIT 20`,
-      [shopId],
-    ),
-    pool.query<{ avg: string | null }>(
-      `SELECT AVG((metadata->>'durationMs')::numeric) as avg
-       FROM widget_events
-       WHERE shop_id = $1 AND event_name = 'session_duration'`,
-      [shopId],
-    ),
-  ]);
+  const db = getDatabase();
+  const events = db.widget_events.filter((event) => event.shop_id === shopId);
+
+  const eventSummary = countBy(events, (event) => event.event_name).slice(0, 50);
+  const buttonSummary = countBy(
+    events.filter((event) => {
+      if (!event.metadata) {
+        return false;
+      }
+      return Boolean((event.metadata as Record<string, unknown>).label ?? (event.metadata as Record<string, unknown>).buttonId);
+    }),
+    (event) => {
+      const metadata = event.metadata as Record<string, string>;
+      return metadata.label ?? metadata.buttonId ?? event.event_name;
+    },
+  ).slice(0, 20);
+
+  const durations = events
+    .map((event) => {
+      if (event.event_name !== 'session_duration' || !event.metadata) {
+        return null;
+      }
+      const duration = Number((event.metadata as Record<string, unknown>).durationMs);
+      return Number.isFinite(duration) ? duration : null;
+    })
+    .filter((value): value is number => value !== null);
+
+  const averageSessionDurationMs = durations.length
+    ? Math.round(durations.reduce((sum, value) => sum + value, 0) / durations.length)
+    : null;
 
   return {
-    events: eventsResult.rows.map((row) => ({ name: row.event_name, count: Number(row.count) })),
-    buttons: buttonsResult.rows.map((row) => ({ label: row.label, count: Number(row.count) })),
-    averageSessionDurationMs: durationResult.rows[0]?.avg ? Number(durationResult.rows[0].avg) : null,
+    events: eventSummary,
+    buttons: buttonSummary.map((entry) => ({ label: entry.name, count: entry.count })),
+    averageSessionDurationMs,
   };
 }

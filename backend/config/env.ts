@@ -1,23 +1,31 @@
-import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
 
-dotenv.config();
-
-const requiredVars = ['OPENAI_API_KEY', 'DATABASE_URL'] as const;
-
-type RequiredVar = typeof requiredVars[number];
-
-function getEnvVariable(key: RequiredVar): string {
-  const value = process.env[key];
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${key}`);
+function loadDotEnv(): void {
+  const envPath = path.join(process.cwd(), '.env');
+  if (!fs.existsSync(envPath)) {
+    return;
   }
-  return value;
+  const content = fs.readFileSync(envPath, 'utf8');
+  for (const rawLine of content.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) {
+      continue;
+    }
+    const [key, ...rest] = line.split('=');
+    if (!key) {
+      continue;
+    }
+    const value = rest.join('=').trim();
+    if (!(key in process.env)) {
+      process.env[key] = value;
+    }
+  }
 }
 
+loadDotEnv();
+
 export const env = {
-  openaiApiKey: getEnvVariable('OPENAI_API_KEY'),
-  databaseUrl: getEnvVariable('DATABASE_URL'),
   port: Number(process.env.PORT ?? 4000),
-  openAiModel: process.env.OPENAI_MODEL ?? 'gpt-4.1-mini',
-  embeddingModel: process.env.EMBEDDING_MODEL ?? 'text-embedding-3-small',
+  dataFilePath: process.env.DATA_FILE ?? path.join(process.cwd(), 'data', 'db.json'),
 };

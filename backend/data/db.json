@@ -1,0 +1,641 @@
+{
+  "shops": [
+    {
+      "id": 1,
+      "name": "Palompy Demo Shop",
+      "public_key": "11111111-2222-4444-8888-555555555555",
+      "created_at": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "knowledge_chunks": [
+    {
+      "id": 1,
+      "shop_id": 1,
+      "source_type": "faq",
+      "source_id": "shipping",
+      "text": "Доставка по России занимает 2-4 дня курьером. Самовывоз из пунктов выдачи доступен бесплатно.",
+      "created_at": "2024-01-01T00:10:00.000Z"
+    },
+    {
+      "id": 2,
+      "shop_id": 1,
+      "source_type": "policy",
+      "source_id": "returns",
+      "text": "Вы можете оформить возврат в течение 30 дней. Курьер заберёт заказ или можно отнести на почту.",
+      "created_at": "2024-01-01T00:12:00.000Z"
+    }
+  ],
+  "chat_logs": [
+    {
+      "id": 1,
+      "shop_id": 1,
+      "session_id": "demo-session",
+      "user_message": "Расскажите про доставку",
+      "assistant_answer": "Пока не вижу ответа в базе магазина. Напишите, пожалуйста, в поддержку.",
+      "context_used": null,
+      "created_at": "2025-11-18T08:24:47.790Z"
+    },
+    {
+      "id": 2,
+      "shop_id": 1,
+      "session_id": "demo-session",
+      "user_message": "Расскажите про доставку",
+      "assistant_answer": "Пока не вижу ответа в базе магазина. Напишите, пожалуйста, в поддержку.",
+      "context_used": null,
+      "created_at": "2025-11-18T08:25:20.048Z"
+    },
+    {
+      "id": 3,
+      "shop_id": 1,
+      "session_id": "demo-session",
+      "user_message": "Расскажите про доставку",
+      "assistant_answer": "Нашёл информацию: Доставка по России занимает 2-4 дня курьером. Самовывоз из пунктов выдачи доступен бесплатно.",
+      "context_used": "[#1] Доставка по России занимает 2-4 дня курьером. Самовывоз из пунктов выдачи доступен бесплатно.",
+      "created_at": "2025-11-18T08:25:43.014Z"
+    },
+    {
+      "id": 4,
+      "shop_id": 1,
+      "session_id": "2b91ccc3-637d-42ed-9941-ddac2206a69d",
+      "user_message": "Расскажите про доставку",
+      "assistant_answer": "Нашёл информацию: Доставка по России занимает 2-4 дня курьером. Самовывоз из пунктов выдачи доступен бесплатно.",
+      "context_used": "[#1] Доставка по России занимает 2-4 дня курьером. Самовывоз из пунктов выдачи доступен бесплатно.",
+      "created_at": "2025-11-18T08:30:49.356Z"
+    }
+  ],
+  "surveys": [
+    {
+      "id": 1,
+      "shop_id": 1,
+      "title": "Как вам наш магазин?",
+      "description": "Поделитесь впечатлением, это займёт минуту.",
+      "status": "active",
+      "definition": {
+        "questions": [
+          {
+            "id": "experience",
+            "prompt": "Как оцениваете работу ассистента?",
+            "type": "single-choice",
+            "required": true,
+            "options": [
+              {
+                "id": "great",
+                "label": "Отлично"
+              },
+              {
+                "id": "ok",
+                "label": "Нормально"
+              },
+              {
+                "id": "bad",
+                "label": "Нужно улучшить"
+              }
+            ]
+          },
+          {
+            "id": "comment",
+            "prompt": "Что можно улучшить?",
+            "type": "text"
+          }
+        ]
+      },
+      "created_at": "2024-01-02T09:00:00.000Z"
+    }
+  ],
+  "survey_responses": [],
+  "widget_events": [
+    {
+      "id": 1,
+      "shop_id": 1,
+      "session_id": "demo-session",
+      "event_name": "widget_open",
+      "metadata": {
+        "label": "cta"
+      },
+      "created_at": "2025-11-18T08:25:46.448Z"
+    },
+    {
+      "id": 2,
+      "shop_id": 1,
+      "session_id": "87b6a068-7688-49f6-b7f1-ed620dde84d1",
+      "event_name": "widget_init",
+      "metadata": {
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:26:39.447Z"
+    },
+    {
+      "id": 3,
+      "shop_id": 1,
+      "session_id": "87b6a068-7688-49f6-b7f1-ed620dde84d1",
+      "event_name": "page_view",
+      "metadata": {
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:26:39.449Z"
+    },
+    {
+      "id": 4,
+      "shop_id": 1,
+      "session_id": "87b6a068-7688-49f6-b7f1-ed620dde84d1",
+      "event_name": "survey_view",
+      "metadata": {
+        "surveyId": 1,
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:26:39.463Z"
+    },
+    {
+      "id": 5,
+      "shop_id": 1,
+      "session_id": "87b6a068-7688-49f6-b7f1-ed620dde84d1",
+      "event_name": "toggle_click",
+      "metadata": {
+        "next": "open",
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:26:42.224Z"
+    },
+    {
+      "id": 6,
+      "shop_id": 1,
+      "session_id": "87b6a068-7688-49f6-b7f1-ed620dde84d1",
+      "event_name": "widget_toggle",
+      "metadata": {
+        "state": "opened",
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:26:42.229Z"
+    },
+    {
+      "id": 7,
+      "shop_id": 1,
+      "session_id": "d39ff3e1-cb3f-492a-b602-57684dfe74d0",
+      "event_name": "widget_init",
+      "metadata": {
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:27:11.264Z"
+    },
+    {
+      "id": 8,
+      "shop_id": 1,
+      "session_id": "d39ff3e1-cb3f-492a-b602-57684dfe74d0",
+      "event_name": "survey_view",
+      "metadata": {
+        "surveyId": 1,
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:27:11.268Z"
+    },
+    {
+      "id": 9,
+      "shop_id": 1,
+      "session_id": "d39ff3e1-cb3f-492a-b602-57684dfe74d0",
+      "event_name": "page_view",
+      "metadata": {
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:27:11.270Z"
+    },
+    {
+      "id": 10,
+      "shop_id": 1,
+      "session_id": "d39ff3e1-cb3f-492a-b602-57684dfe74d0",
+      "event_name": "toggle_click",
+      "metadata": {
+        "next": "open",
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:27:13.448Z"
+    },
+    {
+      "id": 11,
+      "shop_id": 1,
+      "session_id": "d39ff3e1-cb3f-492a-b602-57684dfe74d0",
+      "event_name": "widget_toggle",
+      "metadata": {
+        "state": "opened",
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:27:13.451Z"
+    },
+    {
+      "id": 12,
+      "shop_id": 1,
+      "session_id": "aa59fd98-450a-4a75-bbe9-803600a349d3",
+      "event_name": "widget_init",
+      "metadata": {
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:27:51.280Z"
+    },
+    {
+      "id": 13,
+      "shop_id": 1,
+      "session_id": "aa59fd98-450a-4a75-bbe9-803600a349d3",
+      "event_name": "page_view",
+      "metadata": {
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:27:51.283Z"
+    },
+    {
+      "id": 14,
+      "shop_id": 1,
+      "session_id": "aa59fd98-450a-4a75-bbe9-803600a349d3",
+      "event_name": "survey_view",
+      "metadata": {
+        "surveyId": 1,
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:27:51.285Z"
+    },
+    {
+      "id": 15,
+      "shop_id": 1,
+      "session_id": "aa59fd98-450a-4a75-bbe9-803600a349d3",
+      "event_name": "toggle_click",
+      "metadata": {
+        "next": "open",
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:27:54.008Z"
+    },
+    {
+      "id": 16,
+      "shop_id": 1,
+      "session_id": "aa59fd98-450a-4a75-bbe9-803600a349d3",
+      "event_name": "widget_toggle",
+      "metadata": {
+        "state": "opened",
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:27:54.011Z"
+    },
+    {
+      "id": 17,
+      "shop_id": 1,
+      "session_id": "c7473c65-27f9-424e-ba53-df5a71d23c12",
+      "event_name": "widget_init",
+      "metadata": {
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:28:51.641Z"
+    },
+    {
+      "id": 18,
+      "shop_id": 1,
+      "session_id": "c7473c65-27f9-424e-ba53-df5a71d23c12",
+      "event_name": "page_view",
+      "metadata": {
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:28:51.647Z"
+    },
+    {
+      "id": 19,
+      "shop_id": 1,
+      "session_id": "c7473c65-27f9-424e-ba53-df5a71d23c12",
+      "event_name": "survey_view",
+      "metadata": {
+        "surveyId": 1,
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:28:51.649Z"
+    },
+    {
+      "id": 20,
+      "shop_id": 1,
+      "session_id": "c7473c65-27f9-424e-ba53-df5a71d23c12",
+      "event_name": "toggle_click",
+      "metadata": {
+        "next": "open",
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:28:54.438Z"
+    },
+    {
+      "id": 21,
+      "shop_id": 1,
+      "session_id": "c7473c65-27f9-424e-ba53-df5a71d23c12",
+      "event_name": "widget_toggle",
+      "metadata": {
+        "state": "opened",
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:28:54.441Z"
+    },
+    {
+      "id": 22,
+      "shop_id": 1,
+      "session_id": "ae2e70b2-3ad9-4cf1-8887-f2bec5f34c1e",
+      "event_name": "page_view",
+      "metadata": {
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:29:08.465Z"
+    },
+    {
+      "id": 23,
+      "shop_id": 1,
+      "session_id": "ae2e70b2-3ad9-4cf1-8887-f2bec5f34c1e",
+      "event_name": "widget_init",
+      "metadata": {
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:29:08.467Z"
+    },
+    {
+      "id": 24,
+      "shop_id": 1,
+      "session_id": "ae2e70b2-3ad9-4cf1-8887-f2bec5f34c1e",
+      "event_name": "survey_view",
+      "metadata": {
+        "surveyId": 1,
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:29:08.486Z"
+    },
+    {
+      "id": 25,
+      "shop_id": 1,
+      "session_id": "ae2e70b2-3ad9-4cf1-8887-f2bec5f34c1e",
+      "event_name": "toggle_click",
+      "metadata": {
+        "next": "open",
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:29:11.264Z"
+    },
+    {
+      "id": 26,
+      "shop_id": 1,
+      "session_id": "ae2e70b2-3ad9-4cf1-8887-f2bec5f34c1e",
+      "event_name": "widget_toggle",
+      "metadata": {
+        "state": "opened",
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:29:11.268Z"
+    },
+    {
+      "id": 27,
+      "shop_id": 1,
+      "session_id": "1c48dc9a-88b4-44c2-9ed9-a1245237c76e",
+      "event_name": "widget_init",
+      "metadata": {
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:29:35.145Z"
+    },
+    {
+      "id": 28,
+      "shop_id": 1,
+      "session_id": "1c48dc9a-88b4-44c2-9ed9-a1245237c76e",
+      "event_name": "page_view",
+      "metadata": {
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:29:35.147Z"
+    },
+    {
+      "id": 29,
+      "shop_id": 1,
+      "session_id": "1c48dc9a-88b4-44c2-9ed9-a1245237c76e",
+      "event_name": "survey_view",
+      "metadata": {
+        "surveyId": 1,
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:29:35.152Z"
+    },
+    {
+      "id": 30,
+      "shop_id": 1,
+      "session_id": "1c48dc9a-88b4-44c2-9ed9-a1245237c76e",
+      "event_name": "toggle_click",
+      "metadata": {
+        "next": "open",
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:29:37.859Z"
+    },
+    {
+      "id": 31,
+      "shop_id": 1,
+      "session_id": "1c48dc9a-88b4-44c2-9ed9-a1245237c76e",
+      "event_name": "widget_toggle",
+      "metadata": {
+        "state": "opened",
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:29:37.863Z"
+    },
+    {
+      "id": 32,
+      "shop_id": 1,
+      "session_id": "65ea3457-0c2a-4fa0-86d2-a85cc6e8cb1e",
+      "event_name": "page_view",
+      "metadata": {
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:29:51.370Z"
+    },
+    {
+      "id": 33,
+      "shop_id": 1,
+      "session_id": "65ea3457-0c2a-4fa0-86d2-a85cc6e8cb1e",
+      "event_name": "widget_init",
+      "metadata": {
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:29:51.374Z"
+    },
+    {
+      "id": 34,
+      "shop_id": 1,
+      "session_id": "65ea3457-0c2a-4fa0-86d2-a85cc6e8cb1e",
+      "event_name": "survey_view",
+      "metadata": {
+        "surveyId": 1,
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:29:51.377Z"
+    },
+    {
+      "id": 35,
+      "shop_id": 1,
+      "session_id": "65ea3457-0c2a-4fa0-86d2-a85cc6e8cb1e",
+      "event_name": "toggle_click",
+      "metadata": {
+        "next": "open",
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:29:54.134Z"
+    },
+    {
+      "id": 36,
+      "shop_id": 1,
+      "session_id": "65ea3457-0c2a-4fa0-86d2-a85cc6e8cb1e",
+      "event_name": "widget_toggle",
+      "metadata": {
+        "state": "opened",
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:29:54.138Z"
+    },
+    {
+      "id": 37,
+      "shop_id": 1,
+      "session_id": "2987a85c-cf01-467e-a812-9f2f8d199eaf",
+      "event_name": "page_view",
+      "metadata": {
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:30:09.102Z"
+    },
+    {
+      "id": 38,
+      "shop_id": 1,
+      "session_id": "2987a85c-cf01-467e-a812-9f2f8d199eaf",
+      "event_name": "survey_view",
+      "metadata": {
+        "surveyId": 1,
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:30:09.108Z"
+    },
+    {
+      "id": 39,
+      "shop_id": 1,
+      "session_id": "2987a85c-cf01-467e-a812-9f2f8d199eaf",
+      "event_name": "widget_init",
+      "metadata": {
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:30:09.118Z"
+    },
+    {
+      "id": 40,
+      "shop_id": 1,
+      "session_id": "2b91ccc3-637d-42ed-9941-ddac2206a69d",
+      "event_name": "widget_init",
+      "metadata": {
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:30:48.216Z"
+    },
+    {
+      "id": 41,
+      "shop_id": 1,
+      "session_id": "2b91ccc3-637d-42ed-9941-ddac2206a69d",
+      "event_name": "survey_view",
+      "metadata": {
+        "surveyId": 1,
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:30:48.223Z"
+    },
+    {
+      "id": 42,
+      "shop_id": 1,
+      "session_id": "2b91ccc3-637d-42ed-9941-ddac2206a69d",
+      "event_name": "page_view",
+      "metadata": {
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:30:48.228Z"
+    },
+    {
+      "id": 43,
+      "shop_id": 1,
+      "session_id": "2b91ccc3-637d-42ed-9941-ddac2206a69d",
+      "event_name": "toggle_click",
+      "metadata": {
+        "next": "open",
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:30:49.024Z"
+    },
+    {
+      "id": 44,
+      "shop_id": 1,
+      "session_id": "2b91ccc3-637d-42ed-9941-ddac2206a69d",
+      "event_name": "widget_toggle",
+      "metadata": {
+        "state": "opened",
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:30:49.027Z"
+    },
+    {
+      "id": 45,
+      "shop_id": 1,
+      "session_id": "2b91ccc3-637d-42ed-9941-ddac2206a69d",
+      "event_name": "message_sent",
+      "metadata": {
+        "length": 23,
+        "prefilled": false,
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:30:49.348Z"
+    },
+    {
+      "id": 46,
+      "shop_id": 1,
+      "session_id": "2b91ccc3-637d-42ed-9941-ddac2206a69d",
+      "event_name": "message_answered",
+      "metadata": {
+        "length": 111,
+        "language": "ru",
+        "page": "http://127.0.0.1:4173/demo.html"
+      },
+      "created_at": "2025-11-18T08:30:49.378Z"
+    }
+  ]
+}

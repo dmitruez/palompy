@@ -5,6 +5,7 @@ export interface KnowledgeChunk {
   source_id: string | null;
   text: string;
   created_at: string;
+  embedding?: number[];
 }
 
 export interface KnowledgeDocument {
