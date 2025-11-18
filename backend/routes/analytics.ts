@@ -1,51 +1,52 @@
-import { Router } from 'express';
-import { z } from 'zod';
+import { RouteDefinition } from '../http/types';
+import { json, noContent } from '../http/responses';
+import { HttpError } from '../http/errors';
 import { getShopById, getShopByPublicKey } from '../services/shopsService';
 import { getAnalyticsSummary, recordWidgetEvent } from '../services/analyticsService';
+import { assertRecord, assertString, assertUuid } from '../utils/validation';
 
-const router = Router();
+const routes: RouteDefinition[] = [
+  {
+    method: 'POST',
+    path: '/api/analytics/events',
+    handler: async ({ request }) => {
+      const body = assertRecord(request.body, 'body');
+      const shopPublicKey = assertUuid(body.shopPublicKey, 'shopPublicKey');
+      const sessionId = assertString(body.sessionId, 'sessionId', { minLength: 4 });
+      const eventName = assertString(body.eventName, 'eventName', { minLength: 2 });
+      const metadata = body.metadata ? assertRecord(body.metadata, 'metadata') : undefined;
 
-const eventSchema = z.object({
-  shopPublicKey: z.string().uuid(),
-  sessionId: z.string().min(4),
-  eventName: z.string().min(2),
-  metadata: z.record(z.any()).optional(),
-});
+      const shop = await getShopByPublicKey(shopPublicKey);
+      if (!shop) {
+        throw new HttpError(404, 'Магазин не найден');
+      }
 
-router.post('/events', async (req, res, next) => {
-  try {
-    const payload = eventSchema.parse(req.body);
-    const shop = await getShopByPublicKey(payload.shopPublicKey);
-    if (!shop) {
-      return res.status(404).json({ error: 'Shop not found' });
-    }
-    await recordWidgetEvent({
-      shopId: shop.id,
-      sessionId: payload.sessionId,
-      eventName: payload.eventName,
-      metadata: payload.metadata,
-    });
-    res.status(204).end();
-  } catch (error) {
-    next(error);
-  }
-});
+      await recordWidgetEvent({
+        shopId: shop.id,
+        sessionId,
+        eventName,
+        metadata,
+      });
 
-router.get('/shops/:shopId/summary', async (req, res, next) => {
-  try {
-    const numericId = Number(req.params.shopId);
-    if (Number.isNaN(numericId)) {
-      return res.status(400).json({ error: 'Invalid shop id' });
-    }
-    const shop = await getShopById(numericId);
-    if (!shop) {
-      return res.status(404).json({ error: 'Shop not found' });
-    }
-    const summary = await getAnalyticsSummary(shop.id);
-    res.json({ summary });
-  } catch (error) {
-    next(error);
-  }
-});
+      return noContent();
+    },
+  },
+  {
+    method: 'GET',
+    path: '/api/analytics/shops/:shopId/summary',
+    handler: async ({ request }) => {
+      const shopId = Number(request.params.shopId);
+      if (!Number.isFinite(shopId)) {
+        throw new HttpError(400, 'Некорректный идентификатор магазина');
+      }
+      const shop = await getShopById(shopId);
+      if (!shop) {
+        throw new HttpError(404, 'Магазин не найден');
+      }
+      const summary = await getAnalyticsSummary(shop.id);
+      return json({ summary });
+    },
+  },
+];
 
-export default router;
+export default routes;

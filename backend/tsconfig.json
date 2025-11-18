@@ -23,6 +23,8 @@
     "services/**/*.ts",
     "models/**/*.ts",
     "utils/**/*.ts",
+    "http/**/*.ts",
+    "storage/**/*.ts",
     "types/**/*.d.ts"
   ],
   "ts-node": {

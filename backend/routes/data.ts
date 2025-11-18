@@ -1,38 +1,46 @@
-import { Router } from 'express';
-import { z } from 'zod';
+import { RouteDefinition } from '../http/types';
+import { json } from '../http/responses';
+import { HttpError } from '../http/errors';
 import { ingestKnowledgeDocuments } from '../services/knowledgeService';
 import { getShopById } from '../services/shopsService';
+import { assertArray, assertNumber, assertRecord, assertString } from '../utils/validation';
 
-const router = Router();
+const routes: RouteDefinition[] = [
+  {
+    method: 'POST',
+    path: '/api/shops/:shopId/data',
+    handler: async ({ request }) => {
+      const shopId = Number(request.params.shopId);
+      if (!Number.isFinite(shopId)) {
+        throw new HttpError(400, 'Некорректный идентификатор магазина');
+      }
+      const shop = await getShopById(shopId);
+      if (!shop) {
+        throw new HttpError(404, 'Магазин не найден');
+      }
+      const body = assertRecord(request.body, 'body');
+      const documentsInput = assertArray(body.documents, 'documents');
+      if (!documentsInput.length) {
+        throw new HttpError(400, 'Нужно передать хотя бы один документ');
+      }
+      const documents = documentsInput.map((doc, index) => {
+        const record = assertRecord(doc, `documents[${index}]`);
+        const sourceType = assertString(record.sourceType, 'sourceType');
+        const sourceId = record.sourceId ? assertString(record.sourceId, 'sourceId') : undefined;
+        const text = assertString(record.text, 'text', { minLength: 10 });
+        let chunkSize: number | undefined;
+        if (record.chunkSize !== undefined) {
+          chunkSize = assertNumber(record.chunkSize, 'chunkSize');
+          if (chunkSize < 100 || chunkSize > 2000) {
+            throw new HttpError(400, 'chunkSize должен быть от 100 до 2000 символов');
+          }
+        }
+        return { sourceType, sourceId, text, chunkSize };
+      });
+      const inserted = await ingestKnowledgeDocuments(shop.id, documents);
+      return json({ inserted });
+    },
+  },
+];
 
-const documentSchema = z.object({
-  sourceType: z.string(),
-  sourceId: z.string().optional(),
-  text: z.string().min(10, 'Document text is too short'),
-  chunkSize: z.number().min(100).max(2000).optional(),
-});
-
-const uploadSchema = z.object({
-  documents: z.array(documentSchema).min(1),
-});
-
-router.post('/:shopId/data', async (req, res, next) => {
-  try {
-    const { shopId } = req.params;
-    const numericId = Number(shopId);
-    if (Number.isNaN(numericId)) {
-      return res.status(400).json({ error: 'Invalid shop id' });
-    }
-    const shop = await getShopById(numericId);
-    if (!shop) {
-      return res.status(404).json({ error: 'Shop not found' });
-    }
-    const body = uploadSchema.parse(req.body);
-    const inserted = await ingestKnowledgeDocuments(shop.id, body.documents);
-    res.json({ inserted });
-  } catch (error) {
-    next(error);
-  }
-});
-
-export default router;
+export default routes;

@@ -1,37 +1,57 @@
-import { openai } from '../config/openai';
-import { env } from '../config/env';
-import { pool } from '../config/db';
 import { KnowledgeChunk, KnowledgeDocument } from '../models/knowledgeChunk';
 import { chunkText } from '../utils/chunkText';
+import { getDatabase, nextId, persistDatabase } from '../storage/database';
 
-function toPgVector(values: number[]): string {
-  return `[${values.join(',')}]`;
+function normalizeToken(token: string): string {
+  return token.replace(/[аеёиоуыэюя]$/u, '').replace(/[aeiou]$/u, '');
 }
 
-export async function ingestKnowledgeDocuments(
-  shopId: number,
-  documents: KnowledgeDocument[],
-): Promise<number> {
+function tokenize(text: string): string[] {
+  return (text.toLowerCase().match(/[a-z0-9\u0400-\u04FF]+/g) ?? [])
+    .map((token) => normalizeToken(token))
+    .filter(Boolean);
+}
+
+function scoreText(text: string, queryTokens: string[]): number {
+  if (!queryTokens.length) {
+    return 0;
+  }
+  const tokens = tokenize(text);
+  if (!tokens.length) {
+    return 0;
+  }
+  const tokenSet = new Set(tokens);
+  let matches = 0;
+  for (const token of queryTokens) {
+    if (tokenSet.has(token)) {
+      matches += 1;
+    }
+  }
+  return matches / queryTokens.length;
+}
+
+export async function ingestKnowledgeDocuments(shopId: number, documents: KnowledgeDocument[]): Promise<number> {
+  const db = getDatabase();
   let inserted = 0;
 
   for (const doc of documents) {
     const chunks = chunkText(doc.text, { chunkSize: doc.chunkSize ?? 700 });
     for (const chunk of chunks) {
-      const embeddingResponse = await openai.embeddings.create({
-        model: env.embeddingModel,
-        input: chunk,
-      });
-      const embedding = embeddingResponse.data[0]?.embedding;
-      if (!embedding) {
-        continue;
-      }
-      await pool.query(
-        `INSERT INTO knowledge_chunks (shop_id, source_type, source_id, text, embedding)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [shopId, doc.sourceType, doc.sourceId ?? null, chunk, toPgVector(embedding)],
-      );
+      const record: KnowledgeChunk = {
+        id: nextId(db.knowledge_chunks),
+        shop_id: shopId,
+        source_type: doc.sourceType,
+        source_id: doc.sourceId ?? null,
+        text: chunk,
+        created_at: new Date().toISOString(),
+      };
+      db.knowledge_chunks.push(record);
       inserted += 1;
     }
+  }
+
+  if (inserted > 0) {
+    persistDatabase();
   }
 
   return inserted;
@@ -42,26 +62,19 @@ export async function searchRelevantChunks(
   query: string,
   limit = 5,
 ): Promise<KnowledgeChunk[]> {
-  if (!query.trim()) {
-    return [];
-  }
-  const embeddingResponse = await openai.embeddings.create({
-    model: env.embeddingModel,
-    input: query,
-  });
-  const embedding = embeddingResponse.data[0]?.embedding;
-  if (!embedding) {
+  const db = getDatabase();
+  const queryTokens = tokenize(query);
+  if (!queryTokens.length) {
     return [];
   }
 
-  const { rows } = await pool.query<KnowledgeChunk>(
-    `SELECT id, shop_id, source_type, source_id, text, created_at
-     FROM knowledge_chunks
-     WHERE shop_id = $1
-     ORDER BY embedding <=> $2
-     LIMIT $3`,
-    [shopId, toPgVector(embedding), limit],
-  );
+  const scored = db.knowledge_chunks
+    .filter((chunk) => chunk.shop_id === shopId)
+    .map((chunk) => ({ chunk, score: scoreText(chunk.text, queryTokens) }))
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((entry) => entry.chunk);
 
-  return rows;
+  return scored;
 }
