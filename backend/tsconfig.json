@@ -25,6 +25,7 @@
     "models/**/*.ts",
     "utils/**/*.ts",
     "http/**/*.ts",
+    "security/**/*.ts",
     "storage/**/*.ts",
     "db/**/*.ts",
     "server/**/*.ts",

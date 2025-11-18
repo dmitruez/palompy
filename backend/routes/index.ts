@@ -6,6 +6,7 @@ import shopsRoutes from './shops';
 import surveyResponsesRoutes from './surveyResponses';
 import surveysRoutes from './surveys';
 import proxyRoutes from './proxy';
+import securityRoutes from './security';
 
 const routes: RouteDefinition[] = [
   ...shopsRoutes,
@@ -15,6 +16,7 @@ const routes: RouteDefinition[] = [
   ...surveyResponsesRoutes,
   ...analyticsRoutes,
   ...proxyRoutes,
+  ...securityRoutes,
 ];
 
 export default routes;

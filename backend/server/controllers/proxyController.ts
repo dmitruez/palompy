@@ -2,19 +2,18 @@ import { env } from '../../config/env';
 import { HttpError } from '../../http/errors';
 import { RouteContext, RouteResponse } from '../../http/types';
 import { assertRecord, assertString } from '../../utils/validation';
-import { verifyJwt, JwtPayload } from '../../utils/jwt';
 import { requireActiveSubscription } from '../../services/subscriptionService';
-
-interface TokenPayload extends JwtPayload {
-  sub?: string | number;
-  subscriptionId?: string | number;
-}
+import { authenticateRequest } from '../../security/authentication';
+import { requireRoles } from '../../services/rbacService';
 
 export class ProxyController {
   async handle(context: RouteContext): Promise<RouteResponse> {
-    const token = this.extractToken(context.request.headers ?? {});
-    const payload = this.decodeToken(token);
-    await requireActiveSubscription(payload.subscriptionId, payload.userId);
+    const auth = authenticateRequest(context.request.headers ?? {});
+    if (!auth.subscriptionId) {
+      throw new HttpError(401, 'JWT не содержит subscriptionId');
+    }
+    await requireActiveSubscription(auth.subscriptionId, auth.userId);
+    await requireRoles(auth.userId, ['integration:invoke', 'admin']);
 
     const body = assertRecord(context.request.body ?? {}, 'body');
     const targetPath = assertString(body.targetPath, 'targetPath', { minLength: 2 });
@@ -25,32 +24,6 @@ export class ProxyController {
     const payloadBody = body.payload ?? null;
 
     return this.forwardRequest({ method, targetPath, payload: payloadBody });
-  }
-
-  private extractToken(headers: RouteContext['request']['headers']): string {
-    type HeaderValue = string | string[] | undefined;
-    const normalized = headers as Record<string, HeaderValue>;
-    const authorizationRaw =
-      normalized?.authorization ?? normalized?.Authorization ?? normalized?.AUTHORIZATION;
-    const authorization = Array.isArray(authorizationRaw) ? authorizationRaw[0] : authorizationRaw;
-    if (!authorization || !authorization.toString().startsWith('Bearer ')) {
-      throw new HttpError(401, 'Необходимо предоставить токен авторизации');
-    }
-    return authorization.toString().slice(7);
-  }
-
-  private decodeToken(token: string): { userId: number; subscriptionId: number } {
-    try {
-      const payload = verifyJwt<TokenPayload>(token, env.apiJwtSecret);
-      const userId = Number(payload.sub ?? payload.userId);
-      const subscriptionId = Number(payload.subscriptionId);
-      if (!Number.isFinite(userId) || !Number.isFinite(subscriptionId)) {
-        throw new Error('Invalid payload');
-      }
-      return { userId, subscriptionId };
-    } catch (error) {
-      throw new HttpError(401, 'Неверный JWT-токен', { cause: (error as Error).message });
-    }
   }
 
   private async forwardRequest({

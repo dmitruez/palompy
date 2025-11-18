@@ -6,7 +6,10 @@ export interface RouteRequest {
   params: Record<string, string>;
   query: Record<string, string | string[]>;
   body: unknown;
-  headers: Record<string, string | undefined>;
+  headers: Record<string, string>;
+  sessionId?: string;
+  ip?: string;
+  csrfToken?: string;
 }
 
 export interface RouteContext {
