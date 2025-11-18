@@ -1,23 +1,23 @@
-# Palompy Security Hardening
+# Безопасность Palompy
 
-## TLS termination & reverse proxy
-* `infrastructure/nginx/palompy.conf` configures Nginx to terminate TLS (Let's Encrypt certificates), forces HTTPS, enables HTTP/2, and injects HSTS/defensive headers before forwarding requests to the Node.js backend listening on `127.0.0.1:4000`.
-* `/api/proxy` is only reachable through the reverse proxy, which keeps the third-party API key server-side while propagating client IP information via `X-Forwarded-*` headers.
+## Завершение TLS и реверс-прокси
+- `infrastructure/nginx/palompy.conf` настраивает Nginx на приём HTTPS-трафика (сертификаты Let's Encrypt), принудительный редирект с HTTP на HTTPS, поддержку HTTP/2 и добавление защитных заголовков до проксирования запросов на Node.js backend `127.0.0.1:4000`.
+- Маршрут `/api/proxy` доступен только через реверс-прокси, поэтому ключ стороннего API остаётся на сервере, а адрес клиента передаётся через `X-Forwarded-*` заголовки.
 
-## Secret management & API proxying
-* `backend/config/env.ts` now resolves sensitive values from environment variables, secure files, or a JSON-based secrets manager (`SECRETS_MANAGER_FILE`). `THIRD_PARTY_API_KEY` is therefore never exposed to the browser and is injected inside `ProxyController` before forwarding requests.
-* The `/api/proxy` handler validates JWTs, enforces active subscriptions, and performs strict RBAC (`integration:invoke` or `admin` roles via the `user_roles` table).
+## Управление секретами и проксирование API
+- `backend/config/env.ts` читает чувствительные переменные из окружения, файлов или JSON-хранилища секретов (`SECRETS_MANAGER_FILE`). Так `THIRD_PARTY_API_KEY` никогда не попадает в браузер и подставляется внутри `ProxyController` перед отправкой запроса.
+- Обработчик `/api/proxy` валидирует JWT, проверяет активную подписку и строго применяет RBAC (`integration:invoke` или `admin` через таблицу `user_roles`).
 
-## Web security middleware
-* Global CSRF protection issues per-session tokens via `GET /api/security/csrf`; all non-GET requests must provide `X-Session-Id` + `X-CSRF-Token` headers.
-* `backend/security/rateLimiter.ts` provides Redis-based request throttling with an automatic in-memory fallback to keep the API responsive during outages.
-* `docs/` users should ensure their embedding clients fetch the CSRF token before making POST/PUT/PATCH/DELETE requests.
+## Middleware уровня веб-безопасности
+- Глобальная защита от CSRF выдаёт токены на `GET /api/security/csrf`; все небезопасные методы должны присылать заголовки `X-Session-Id` + `X-CSRF-Token`.
+- `backend/security/rateLimiter.ts` реализует лимитирование через Redis с автоматическим fallback на память, чтобы API оставалось доступным при сбое Redis.
+- Клиенты, описанные в `docs/`, перед выполнением POST/PUT/PATCH/DELETE должны сначала запросить CSRF-токен.
 
-## Two-factor authentication (2FA)
-* `backend/services/twoFactorService.ts` manages encrypted TOTP secrets (`AES-256-GCM`), recovery codes, and verification helpers stored in the `user_security_settings` table.
-* `POST /api/security/2fa/setup` + `/enable` routes allow privileged operators (roles `owner`/`admin`) to bootstrap and activate TOTP-based 2FA flows.
+## Двухфакторная аутентификация (2FA)
+- `backend/services/twoFactorService.ts` хранит TOTP-секреты в зашифрованном виде (`AES-256-GCM`), а также recovery-коды и хелперы в таблице `user_security_settings`.
+- Роуты `POST /api/security/2fa/setup` и `/enable` позволяют ролям `owner`/`admin` подключать и активировать 2FA.
 
-## Data-at-rest protections
-* PostgreSQL tables now include `user_roles` and `user_security_settings`. Deploy Postgres on encrypted volumes (e.g., LUKS or managed cloud storage with disk encryption enabled) so these secrets remain encrypted at rest.
-* Stripe is already used for subscription payments (`web/lib/stripe.ts`), which keeps PCI-sensitive data outside of Palompy infrastructure.
-* When running Postgres manually, enable `ssl=on`, configure full-disk encryption for the VM/disk, and restrict physical backups to encrypted destinations (e.g., S3 with SSE-KMS).
+## Защита данных в состоянии покоя
+- В PostgreSQL используются таблицы `user_roles` и `user_security_settings`. Разворачивайте кластер на шифрованных дисках (LUKS или управляемое облако) и ограничивайте доступ к бэкапам (например, S3 с SSE-KMS).
+- Stripe (`web/lib/stripe.ts`) принимает платежные данные, поэтому Palompy не хранит PCI-информацию.
+- При самостоятельном деплое PostgreSQL включайте `ssl=on`, шифруйте диски и отправляйте бэкапы только на зашифрованные хранилища.
