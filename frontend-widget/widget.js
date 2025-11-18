@@ -197,6 +197,56 @@
       focusedMs: 0,
     };
 
+    const leadSubscribers = new Set();
+
+    function notifyLead(detail) {
+      const payload = { ...detail };
+      leadSubscribers.forEach((listener) => {
+        try {
+          listener(payload);
+        } catch (error) {
+          console.error('[palompy] onLead listener failed', error);
+        }
+      });
+      try {
+        document.dispatchEvent(
+          new CustomEvent('palompy:lead', {
+            detail: payload,
+          }),
+        );
+      } catch (error) {
+        console.error('[palompy] unable to dispatch lead event', error);
+      }
+    }
+
+    function normalizeLeadPayload(raw) {
+      if (!raw || typeof raw !== 'object') {
+        return null;
+      }
+      const record = raw;
+      const normalized = {
+        name: coerceLeadValue(record.name),
+        email: coerceLeadValue(record.email),
+        phone: coerceLeadValue(record.phone),
+        intent: coerceLeadValue(record.intent || record.goal),
+        orderNumber: coerceLeadValue(record.orderNumber || record.order_number),
+        preferredContact: coerceLeadValue(record.preferredContact || record.preferred_contact),
+        notes: coerceLeadValue(record.notes),
+      };
+      if (Object.values(normalized).every((value) => !value)) {
+        return null;
+      }
+      return normalized;
+    }
+
+    function coerceLeadValue(value) {
+      if (typeof value !== 'string') {
+        return null;
+      }
+      const trimmed = value.trim();
+      return trimmed ? trimmed : null;
+    }
+
     function trackEvent(eventName, metadata = {}, options = {}) {
       const meta = metadata && typeof metadata === 'object' ? { ...metadata } : {};
       if (!('language' in meta)) {
@@ -289,6 +339,7 @@
       triggerScenario,
       scenarioMap,
       appendMessage,
+      leadSubscribers,
     });
 
     elements.toggle.addEventListener('click', () => {
@@ -646,7 +697,16 @@
         const response = await fetch(chatEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ shopPublicKey, sessionId, message, language }),
+          body: JSON.stringify({
+            shopPublicKey,
+            sessionId,
+            message,
+            language,
+            metadata: {
+              pageUrl: window.location.href,
+              pageTitle: document.title,
+            },
+          }),
         });
         if (!response.ok) {
           throw new Error(`Network error: ${response.status}`);
@@ -655,6 +715,22 @@
         const answer = (data.answer || texts.fallbackAnswer).toString();
         appendMessage(answer, 'bot');
         trackEvent('message_answered', { length: answer.length });
+        const leadPayload = normalizeLeadPayload(data.collectedData);
+        if (leadPayload) {
+          const detail = {
+            ...leadPayload,
+            sessionId,
+            pageUrl: window.location.href,
+            answer,
+            message,
+            timestamp: new Date().toISOString(),
+          };
+          notifyLead(detail);
+          trackEvent('lead_collected', {
+            hasContact: Boolean(leadPayload.email || leadPayload.phone),
+            intent: leadPayload.intent || undefined,
+          });
+        }
       } catch (error) {
         encounteredError = true;
         console.error('[palompy] chat error', error);
@@ -798,6 +874,9 @@
       messages.setAttribute('role', 'log');
       messages.setAttribute('aria-live', 'polite');
 
+      const content = document.createElement('div');
+      content.className = 'palompy-chat-content';
+
       const quickPromptWrapper = document.createElement('div');
       quickPromptWrapper.className = 'palompy-quick-prompts';
 
@@ -878,14 +957,15 @@
 
       windowEl.appendChild(header);
       if (perks.length) {
-        windowEl.appendChild(perksWrapper);
+        content.appendChild(perksWrapper);
       }
-      windowEl.appendChild(messages);
+      content.appendChild(messages);
       if (quickPrompts.length) {
-        windowEl.appendChild(quickPromptWrapper);
+        content.appendChild(quickPromptWrapper);
       }
-      windowEl.appendChild(surveyWrapper);
-      windowEl.appendChild(feedbackBar);
+      content.appendChild(surveyWrapper);
+      content.appendChild(feedbackBar);
+      windowEl.appendChild(content);
       windowEl.appendChild(inputWrapper);
 
       document.body.appendChild(windowEl);
@@ -1101,7 +1181,14 @@
     document.addEventListener('palompy:feedback', requestFeedback);
   }
 
-  function exposePublicAPI({ toggleWindow, handleSend, triggerScenario, scenarioMap, appendMessage }) {
+  function exposePublicAPI({
+    toggleWindow,
+    handleSend,
+    triggerScenario,
+    scenarioMap,
+    appendMessage,
+    leadSubscribers,
+  }) {
     const api = {
       open: () => toggleWindow(true),
       close: () => toggleWindow(false),
@@ -1122,6 +1209,15 @@
         }
         toggleWindow(true);
         void handleSend(String(message));
+      },
+      onLead: (listener) => {
+        if (typeof listener !== 'function') {
+          return () => {};
+        }
+        leadSubscribers.add(listener);
+        return () => {
+          leadSubscribers.delete(listener);
+        };
       },
     };
     window.PalompyWidget = api;

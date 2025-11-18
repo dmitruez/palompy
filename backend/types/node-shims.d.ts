@@ -29,6 +29,7 @@ declare const process: NodeJS.Process;
 declare var console: {
   log: (...args: unknown[]) => void;
   error: (...args: unknown[]) => void;
+  warn: (...args: unknown[]) => void;
 };
 
 declare class URLSearchParams {
@@ -41,5 +42,20 @@ declare class URL {
   pathname: string;
   searchParams: URLSearchParams;
 }
+
+interface RequestInit {
+  method?: string;
+  headers?: Record<string, string>;
+  body?: string;
+}
+
+interface Response {
+  ok: boolean;
+  status: number;
+  json(): Promise<unknown>;
+  text(): Promise<string>;
+}
+
+declare function fetch(input: string, init?: RequestInit): Promise<Response>;
 
 declare var __dirname: string;

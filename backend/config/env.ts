@@ -28,4 +28,7 @@ loadDotEnv();
 export const env = {
   port: Number(process.env.PORT ?? 4000),
   dataFilePath: process.env.DATA_FILE ?? path.join(process.cwd(), 'data', 'db.json'),
+  openaiApiKey: process.env.OPENAI_API_KEY ?? '',
+  openaiModel: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
+  openaiBaseUrl: process.env.OPENAI_BASE_URL ?? 'https://api.openai.com/v1',
 };
