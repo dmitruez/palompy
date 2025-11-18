@@ -83,14 +83,23 @@ function loadDatabase(): DatabaseSchema {
   try {
     const raw = fs.readFileSync(env.dataFilePath, 'utf8');
     const parsed = JSON.parse(raw) as DatabaseSchema;
-    return parsed;
+    return migrateDatabaseSchema(parsed);
   } catch (error) {
     console.error('Failed to read database file, falling back to defaults', error);
-    return { ...DEFAULT_DATA };
+    return migrateDatabaseSchema({ ...DEFAULT_DATA });
   }
 }
 
 const database = loadDatabase();
+
+function migrateDatabaseSchema(schema: DatabaseSchema): DatabaseSchema {
+  schema.chat_logs = schema.chat_logs.map((log) => ({
+    ...log,
+    metadata: log.metadata ?? null,
+    collected_profile: log.collected_profile ?? null,
+  }));
+  return schema;
+}
 
 export function getDatabase(): DatabaseSchema {
   return database;

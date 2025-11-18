@@ -1,3 +1,10 @@
+import { LeadCaptureData } from './chatLead';
+
+export interface ChatLogMetadata {
+  pageUrl?: string;
+  pageTitle?: string;
+}
+
 export interface ChatLog {
   id: number;
   shop_id: number;
@@ -5,5 +12,7 @@ export interface ChatLog {
   user_message: string;
   assistant_answer: string;
   context_used: string | null;
+  metadata: ChatLogMetadata | null;
+  collected_profile: LeadCaptureData | null;
   created_at: string;
 }
