@@ -5,6 +5,8 @@ import { compileRoutes, matchRoute } from '../http/router';
 import { HttpError } from '../http/errors';
 import { HttpMethod, RouteContext, RouteResponse } from '../http/types';
 import { attachMetricsTracker } from '../middleware/metricsMiddleware';
+import { requireCsrfToken } from '../security/csrf';
+import { enforceRateLimit } from '../security/rateLimiter';
 
 const compiledRoutes = compileRoutes(routes);
 const JSON_LIMIT = 2 * 1024 * 1024; // 2mb
@@ -24,6 +26,25 @@ function buildQuery(searchParams: URLSearchParams): Record<string, string | stri
     }
   }
   return query;
+}
+
+function normalizeHeaders(
+  raw: Record<string, string | string[] | number | boolean | undefined>,
+): Record<string, string> {
+  const headers: Record<string, string> = {};
+  if (!raw) {
+    return headers;
+  }
+  for (const [key, value] of Object.entries(raw)) {
+    if (Array.isArray(value)) {
+      headers[key.toLowerCase()] = value[value.length - 1];
+    } else if (typeof value === 'string') {
+      headers[key.toLowerCase()] = value;
+    } else if (typeof value === 'number' || typeof value === 'boolean') {
+      headers[key.toLowerCase()] = value.toString();
+    }
+  }
+  return headers;
 }
 
 async function readBody(req: any): Promise<unknown> {
@@ -59,7 +80,7 @@ function sendResponse(res: any, response: RouteResponse): void {
   const status = response.status ?? 200;
   const headers: Record<string, string> = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Session-Id',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Session-Id, X-CSRF-Token, Authorization',
     'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
     ...(response.headers ?? {}),
   };
@@ -114,6 +135,15 @@ const server = http.createServer(async (req: any, res: any) => {
       throw new HttpError(404, 'Маршрут не найден');
     }
     tracker.setRoutePath(match.route.path ?? url.pathname);
+    const headers = normalizeHeaders(req.headers ?? {});
+    const sessionId = headers['x-session-id'];
+    const csrfToken = headers['x-csrf-token'];
+    const ip = req.socket?.remoteAddress ?? 'unknown';
+    const rateLimitKey = sessionId ?? ip;
+    await enforceRateLimit(rateLimitKey);
+    if (!['GET', 'OPTIONS'].includes(method)) {
+      requireCsrfToken(sessionId, csrfToken);
+    }
     const body = method === 'GET' ? undefined : await readBody(req);
     const context: RouteContext = {
       request: {
@@ -122,7 +152,10 @@ const server = http.createServer(async (req: any, res: any) => {
         params: match.params,
         query: buildQuery(url.searchParams),
         body,
-        headers: req.headers ?? {},
+        headers,
+        sessionId,
+        ip,
+        csrfToken,
       },
     };
     const result = ((await match.route.handler(context)) ?? { status: 204 }) as RouteResponse;
