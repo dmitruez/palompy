@@ -16,7 +16,7 @@ function createPool(): Queryable {
     return globalThis.__palompyDbPool;
   }
   try {
-    // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires
+    // eslint-disable-next-line global-require
     const pg = require('pg') as { Pool: new (config: Record<string, unknown>) => Queryable };
     globalThis.__palompyDbPool = new pg.Pool({ connectionString: env.databaseUrl });
   } catch (error) {

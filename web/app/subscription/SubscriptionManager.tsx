@@ -11,6 +11,7 @@ interface SubscriptionSummary {
 }
 
 interface Props {
+  userId: number;
   userEmail: string;
   subscription: SubscriptionSummary | null;
   initialSessionId?: string;
@@ -23,6 +24,7 @@ interface CompleteResponse {
 }
 
 export default function SubscriptionManager({
+  userId,
   userEmail,
   subscription,
   initialSessionId,
@@ -91,10 +93,36 @@ export default function SubscriptionManager({
     }
   }, [activeSubscription]);
 
+  const trackClick = async (action: string, metadata: Record<string, unknown> = {}) => {
+    if (!Number.isFinite(userId)) {
+      return;
+    }
+    try {
+      await fetch('/api/metrics/click', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          metadata: {
+            userId,
+            timestamp: new Date().toISOString(),
+            ...metadata,
+          },
+        }),
+      });
+    } catch (trackingError) {
+      console.warn('Не удалось записать метрику клика', trackingError);
+    }
+  };
+
   const startCheckout = async () => {
     setPending(true);
     setError(null);
     setMessage('Перенаправляем на Stripe...');
+    void trackClick('subscription_checkout_clicked', {
+      hasActiveSubscription: Boolean(activeSubscription),
+      subscriptionId: activeSubscription?.id ?? null,
+    });
     try {
       const response = await fetch('/api/subscribe', {
         method: 'POST',
